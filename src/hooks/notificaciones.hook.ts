@@ -1,5 +1,5 @@
 import { useState } from "react";
-interface NotificacionInterface {
+export interface NotificacionInterface {
   mostrar: boolean;
   mensaje: string;
   color: string;
@@ -10,7 +10,7 @@ type UseNotificacion = {
   OcultarNotificacion: () => void;
 };
 
-const useNotificacion = (): UseNotificacion => {
+export const useNotificacion = (): UseNotificacion => {
   const [Notificacion, setNotificacion] = useState<NotificacionInterface>({
     mostrar: false,
     color: "",
@@ -27,5 +27,3 @@ const useNotificacion = (): UseNotificacion => {
 
   return { Notificacion, MostrarNotificacion, OcultarNotificacion };
 };
-
-export default useNotificacion;

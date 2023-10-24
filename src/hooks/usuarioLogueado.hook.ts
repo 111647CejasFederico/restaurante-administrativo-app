@@ -11,7 +11,7 @@ const useSesion = (): UseSesion => {
   const getSesion = (): EmpleadoInterface => {
     //@ts-ignore
     return (
-      sessionStorage.getItem("UL") || {
+      JSON.parse(sessionStorage.getItem("UL") || "") || {
         id: 0,
         user: "",
         pass: "",

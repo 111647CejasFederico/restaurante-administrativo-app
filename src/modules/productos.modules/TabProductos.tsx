@@ -1,20 +1,25 @@
 import React, { ReactNode, useEffect, useState } from "react";
 
 import { Button, Stack, Table } from "@mui/joy";
-import { Add, Edit, NoFood } from "@mui/icons-material";
+import { Add, Edit, Fastfood, NoFood } from "@mui/icons-material";
 import { Column, Container, Row } from "../../components/GridComponents";
 import ModalFormProductos from "./ModalFormProductos";
 import ModalDarBaja from "../../components/FeedbackComponents/ModalDarBaja";
 import { ProductoInterface } from "../../interfaces/producto.interface";
 import useUrlAxio from "../../hooks/urlAxio.hook";
-import axios, { AxiosResponse } from "axios";
-import useNotificacion from "../../hooks/notificaciones.hook";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { NotificacionInterface, useNotificacion } from "../../hooks/notificaciones.hook";
+import useSesion from "../../hooks/usuarioLogueado.hook";
 
-export default function TabProductos() {
+interface ContainerProps {
+  MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
+}
+
+const TabProductos: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
   const [openModalProducto, setOpenModalProducto] = useState<boolean>(false);
-  const [modoModalProducto, setModoModalProducto] = useState<"consulta" | "registrar" | "editar">(
-    "consulta"
-  );
+  const [modoModalProducto, setModoModalProducto] = useState<
+    "consulta" | "registrar" | "editar" | "cerrado"
+  >("cerrado");
   const [openModalDarBajaProducto, setOpenModalDarBajaProducto] = useState<boolean>(false);
   const [productos, setProductos] = useState<ProductoInterface[]>([]);
   const [productoSeleccionado, setProductoSeleccionado] = useState<ProductoInterface>({
@@ -26,14 +31,15 @@ export default function TabProductos() {
     habilitado: false,
   });
 
+  const { getSesion } = useSesion();
   const { getUrlAxio } = useUrlAxio();
-  const { MostrarNotificacion } = useNotificacion();
 
   const getProductos = async () => {
     try {
-      const config = {
+      const config: AxiosRequestConfig = {
+        // params: { },
         headers: {
-          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImRhdGFWYWx1ZXMiOnsiaWQiOjIsInVzZXIiOiJGZWtpc28iLCJwYXNzIjoiJDJhJDA4JDlQV0l0dzZkRHVzY0czY3BUM3FnbS5UeWp4c1ZoS0RqVE13dWZHWGxVTkhTWjkzTUhsVnVHIiwibm9tYnJlIjoiRmVkZXJpY28gRW1tYW51ZWwiLCJhcGVsbGlkbyI6IkNlamFzIiwibnJvRG9jdW1lbnRvIjoiNDMyOTg0MjAiLCJyb2wiOjEsImVzdGFkbyI6MSwidGVsZWZvbm8iOiIzNTI1NjEwNjU3IiwiZW1haWwiOiJmY2VqYXM0ODRAZ21haWwuY29tIiwiZmVjaGFfY3JlYWNpb24iOiIyMDIzLTEwLTE5VDAyOjAzOjQ4LjAwMFoiLCJmZWNoYV9hY3R1YWxpemFjaW9uIjoiMjAyMy0xMC0xOVQwMjowMzo0OC4wMDBaIn0sIl9wcmV2aW91c0RhdGFWYWx1ZXMiOnsiaWQiOjIsInVzZXIiOiJGZWtpc28iLCJwYXNzIjoiJDJhJDA4JDlQV0l0dzZkRHVzY0czY3BUM3FnbS5UeWp4c1ZoS0RqVE13dWZHWGxVTkhTWjkzTUhsVnVHIiwibm9tYnJlIjoiRmVkZXJpY28gRW1tYW51ZWwiLCJhcGVsbGlkbyI6IkNlamFzIiwibnJvRG9jdW1lbnRvIjoiNDMyOTg0MjAiLCJyb2wiOjEsImVzdGFkbyI6MSwidGVsZWZvbm8iOiIzNTI1NjEwNjU3IiwiZW1haWwiOiJmY2VqYXM0ODRAZ21haWwuY29tIiwiZmVjaGFfY3JlYWNpb24iOiIyMDIzLTEwLTE5VDAyOjAzOjQ4LjAwMFoiLCJmZWNoYV9hY3R1YWxpemFjaW9uIjoiMjAyMy0xMC0xOVQwMjowMzo0OC4wMDBaIn0sInVuaXFubyI6MSwiX2NoYW5nZWQiOnt9LCJfb3B0aW9ucyI6eyJpc05ld1JlY29yZCI6ZmFsc2UsIl9zY2hlbWEiOm51bGwsIl9zY2hlbWFEZWxpbWl0ZXIiOiIiLCJyYXciOnRydWUsImF0dHJpYnV0ZXMiOlsiaWQiLCJ1c2VyIiwicGFzcyIsIm5vbWJyZSIsImFwZWxsaWRvIiwibnJvRG9jdW1lbnRvIiwicm9sIiwiZXN0YWRvIiwidGVsZWZvbm8iLCJlbWFpbCIsImZlY2hhX2NyZWFjaW9uIiwiZmVjaGFfYWN0dWFsaXphY2lvbiJdfSwiaXNOZXdSZWNvcmQiOmZhbHNlfSwiaWF0IjoxNjk3NjgxMDQ1LCJleHAiOjE2OTc3MDk4NDV9.vCM1ofUJ_ZCYyO_vGMb5HpMCt7ismmfNvV-Jdyn8JDw`,
+          Authorization: `Bearer ${getSesion().token}`,
         },
       };
       let response: AxiosResponse = await axios.get(`${getUrlAxio()}Producto`, config);
@@ -62,13 +68,56 @@ export default function TabProductos() {
     }
   };
 
+  const enableDisableProducto = async () => {
+    let config = {
+      headers: {
+        Authorization: `Bearer ${getSesion().token}`,
+      },
+    };
+    try {
+      const response = await axios.put(
+        `${getUrlAxio()}Producto`,
+        {
+          id: productoSeleccionado.id,
+          habilitado: !productoSeleccionado.habilitado,
+        },
+        config
+      );
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: `Producto ${
+          !productoSeleccionado.habilitado ? "dado de baja" : "dado de alta"
+        } exitosamente`,
+        color: "verde",
+      });
+      await getProductos();
+    } catch (e: any) {
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: "Error: No se modifico el producto",
+        color: "rojo",
+      });
+    }
+  };
+
   useEffect(() => {
     getProductos();
   }, []);
 
+  useEffect(() => {
+    if (modoModalProducto !== "cerrado" && !openModalDarBajaProducto && !openModalProducto) {
+      getProductos();
+      setModoModalProducto("cerrado");
+    }
+  }, [openModalDarBajaProducto, openModalProducto, modoModalProducto]);
+
   const handleClickRegistrarProducto = () => {
     setOpenModalProducto(true);
     setModoModalProducto("registrar");
+  };
+  const handleClickConsultarProducto = () => {
+    setOpenModalProducto(true);
+    setModoModalProducto("consulta");
   };
 
   const handleClickEditarProducto = (producto: ProductoInterface) => {
@@ -86,9 +135,11 @@ export default function TabProductos() {
     return productos.map((producto) => (
       <tr key={producto.id}>
         <td>{producto.nombre}</td>
-        <td>{producto.TipoProducto?.nombre}</td>
-        <td>{producto.precio}</td>
-        <td>{producto.habilitado ? "Habilitado" : "Inhabilitado"}</td>
+        <td onDoubleClick={handleClickConsultarProducto}>{producto.TipoProducto?.nombre}</td>
+        <td onDoubleClick={handleClickConsultarProducto}>{producto.precio}</td>
+        <td onDoubleClick={handleClickConsultarProducto}>
+          {producto.habilitado ? "Habilitado" : "Inhabilitado"}
+        </td>
         <td style={{ alignContent: "space-between" }}>
           <Stack direction="row" alignContent="space-around" alignItems="center">
             <Button
@@ -103,7 +154,7 @@ export default function TabProductos() {
               onClick={() => handleClickDarBajaProducto(producto)}
               sx={{ p: "8px" }}
             >
-              <NoFood />
+              {producto.habilitado ? <Fastfood /> : <NoFood />}
             </Button>
           </Stack>
         </td>
@@ -113,13 +164,6 @@ export default function TabProductos() {
 
   return (
     <Container direction="column" justifyContent="space-evenly" alignItems="center">
-      <Row xs={12}>
-        <Column xs={12}>
-          <Button onClick={handleClickRegistrarProducto}>
-            <Add /> Registrar nuevo producto
-          </Button>
-        </Column>
-      </Row>
       <Row
         // variant="outlined"
         sx={{
@@ -182,7 +226,20 @@ export default function TabProductos() {
               <th style={{ width: "var(--Table-lastColumnWidth)" }}>Acciones</th>
             </tr>
           </thead>
-          <tbody>{renderProductos()}</tbody>
+          <tbody>
+            <tr>
+              <td colSpan={5} style={{ paddingInline: 0, paddingBlock: "5px" }}>
+                <Row xs={12} sx={{ margin: 0, padding: 0 }}>
+                  <Column xs={12} sx={{ margin: 0, padding: 0 }}>
+                    <Button onClick={handleClickRegistrarProducto} sx={{ margin: 0, padding: 0 }}>
+                      <Add /> Registrar nuevo producto
+                    </Button>
+                  </Column>
+                </Row>
+              </td>
+            </tr>
+            {renderProductos()}
+          </tbody>
         </Table>
       </Row>
       <ModalFormProductos
@@ -190,14 +247,23 @@ export default function TabProductos() {
         setOpen={setOpenModalProducto}
         productoSeleccionado={productoSeleccionado}
         modo={modoModalProducto}
+        MostrarNotificacion={MostrarNotificacion}
       />
       <ModalDarBaja
-        titulo="Dar de baja producto"
-        texto="Esta seguro que desea dar de baja el producto seleccionado?"
+        titulo={`${productoSeleccionado.habilitado ? "Dar de baja" : "Dar de alta"} producto`}
+        texto={`Esta seguro que desea ${
+          productoSeleccionado.habilitado ? "dar de baja" : "dar de alta"
+        } el producto seleccionado?`}
+        colorBotonNo="neutral"
+        colorBotonSi="warning"
+        textoBotonNo="Cancelar"
+        textoBotonSi={productoSeleccionado.habilitado ? "Dar de baja" : "Dar de alta"}
         open={openModalDarBajaProducto}
         setOpen={setOpenModalDarBajaProducto}
-        handleClickConfirmar={console.log}
+        handleClickConfirmar={enableDisableProducto}
       />
     </Container>
   );
-}
+};
+
+export default TabProductos;

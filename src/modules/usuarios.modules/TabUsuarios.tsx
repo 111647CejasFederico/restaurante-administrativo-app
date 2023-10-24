@@ -7,8 +7,12 @@ import { Add, Edit, NoAccounts } from "@mui/icons-material";
 import ModalFormUsuarios from "./ModalFormUsuarios";
 import ModalDarBaja from "../../components/FeedbackComponents/ModalDarBaja";
 import { Column, Container, Row } from "../../components/GridComponents";
+import { NotificacionInterface } from "../../hooks/notificaciones.hook";
 
-export default function TabUsuarios() {
+interface ContainerProps {
+  MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
+}
+const TabUsuarios: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
   const [openModalUsuario, setOpenModalUsuario] = useState<boolean>(false);
   const [modoModalUsuario, setModoModalUsuario] = useState<"consulta" | "registrar" | "editar">(
     "consulta"
@@ -269,13 +273,28 @@ export default function TabUsuarios() {
         setOpen={setOpenModalUsuario}
         modo={modoModalUsuario}
       />
-      <ModalDarBaja
+      {/* <ModalDarBaja
         titulo="Dar de baja a usuario"
         texto="Esta seguro que desea dar de baja al usuario seleccionado?"
         open={openModalDarBajaUsuario}
         setOpen={setOpenModalDarBajaUsuario}
         handleClickConfirmar={console.log}
-      />
+      /> */}
+      {/* <ModalDarBaja
+        titulo={`${productoSeleccionado.habilitado ? "Dar de baja" : "Dar de alta"} usuario`}
+        texto={`Esta seguro que desea ${
+          productoSeleccionado.habilitado ? "dar de baja" : "dar de alta"
+        } al usuario seleccionado?`}
+        colorBotonNo="neutral"
+        colorBotonSi={productoSeleccionado.habilitado ? "danger" : "warning"}
+        textoBotonNo="Cancelar"
+        textoBotonSi={productoSeleccionado.habilitado ? "Dar de baja" : "Dar de alta"}
+        open={openModalDarBajaProducto}
+        setOpen={setOpenModalDarBajaProducto}
+        handleClickConfirmar={enableDisableProducto}
+      /> */}
     </Container>
   );
-}
+};
+
+export default TabUsuarios;

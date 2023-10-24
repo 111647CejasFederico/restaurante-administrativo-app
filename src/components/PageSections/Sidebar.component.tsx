@@ -1,71 +1,118 @@
 import * as React from "react";
 import GlobalStyles from "@mui/joy/GlobalStyles";
-import Avatar from "@mui/joy/Avatar";
 import Box from "@mui/joy/Box";
 import Button from "@mui/joy/Button";
-import Card from "@mui/joy/Card";
-import Chip from "@mui/joy/Chip";
-import Divider from "@mui/joy/Divider";
 import IconButton from "@mui/joy/IconButton";
-import Input from "@mui/joy/Input";
-import LinearProgress from "@mui/joy/LinearProgress";
 import List from "@mui/joy/List";
 import ListItem from "@mui/joy/ListItem";
 import ListItemButton, { listItemButtonClasses } from "@mui/joy/ListItemButton";
 import ListItemContent from "@mui/joy/ListItemContent";
 import Typography from "@mui/joy/Typography";
 import Sheet from "@mui/joy/Sheet";
-import Stack from "@mui/joy/Stack";
 import DocumentScannerRounded from "@mui/icons-material/DocumentScannerRounded";
 import DeckRounded from "@mui/icons-material/DeckRounded";
 import ViewListRounded from "@mui/icons-material/ViewListRounded";
-import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
 import AdminPanelSettingsRounded from "@mui/icons-material/AdminPanelSettingsRounded";
 import EqualizerRounded from "@mui/icons-material/EqualizerRounded";
 import PointOfSaleRounded from "@mui/icons-material/PointOfSaleRounded";
-import SupportRoundedIcon from "@mui/icons-material/SupportRounded";
-import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
-import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import BrightnessAutoRoundedIcon from "@mui/icons-material/BrightnessAutoRounded";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 import { closeSidebar } from "../../utils/Sideber.util";
+import useSesion from "../../hooks/usuarioLogueado.hook";
+import { useNavigate } from "react-router";
+import { EmpleadoInterface } from "../../interfaces/empleado.interface";
 
-function Toggler({
-  defaultExpanded = false,
-  renderToggle,
-  children,
-}: {
-  defaultExpanded?: boolean;
-  children: React.ReactNode;
-  renderToggle: (params: {
-    open: boolean;
-    setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  }) => React.ReactNode;
-}) {
-  const [open, setOpen] = React.useState(defaultExpanded);
-
-  return (
-    <React.Fragment>
-      {renderToggle({ open, setOpen })}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateRows: open ? "1fr" : "0fr",
-          transition: "0.2s ease",
-          "& > *": {
-            overflow: "hidden",
-          },
-        }}
-      >
-        {children}
-      </Box>
-    </React.Fragment>
-  );
+interface OpcionLateral {
+  label: string;
+  icon: any;
+  href: string;
+  rolNecesario: number[];
 }
 
 export default function Sidebar() {
+  const [usuario, setUsuario] = React.useState<EmpleadoInterface>({
+    id: 0,
+    user: "",
+    pass: "",
+    nombre: "",
+    apellido: "",
+    nroDocumento: 0,
+    rol: 0,
+    telefono: "",
+    email: "",
+    estado: 0,
+    token: "",
+  });
+  const { getSesion, removeSesion } = useSesion();
+  const navigate = useNavigate();
+
+  const OpcionesLaterales: OpcionLateral[] = [
+    {
+      label: "Carta",
+      icon: <DocumentScannerRounded />,
+      href: "/Portal/Carta",
+      rolNecesario: [1, 2, 3],
+    },
+    {
+      label: "Mesas",
+      icon: <DeckRounded />,
+      href: "/Portal/Mesas",
+      rolNecesario: [1, 2, 3],
+    },
+    {
+      label: "Pedidos",
+      icon: <ViewListRounded />,
+      href: "/Portal/Pedidos",
+      rolNecesario: [1, 2, 3],
+    },
+    {
+      label: "Facturacion",
+      icon: <PointOfSaleRounded />,
+      href: "/Portal/Facturacion",
+      rolNecesario: [1, 2],
+    },
+    {
+      label: "Maestros",
+      icon: <AdminPanelSettingsRounded />,
+      href: "/Portal/Maestros",
+      rolNecesario: [1, 2],
+    },
+    {
+      label: "Reportes",
+      icon: <EqualizerRounded />,
+      href: "/Portal/Reportes",
+      rolNecesario: [1],
+    },
+  ];
+
+  React.useEffect(() => {
+    setUsuario(getSesion());
+  }, []);
+
+  const handleClickCerrarSesion = () => {
+    removeSesion();
+    navigate("/Login/");
+  };
+
+  const renderOptionsLateralMenu = (): JSX.Element[] => {
+    //@ts-ignore
+    return OpcionesLaterales.map((opcion) => {
+      if (opcion.rolNecesario.includes(usuario.rol)) {
+        return (
+          <ListItem key={opcion.label}>
+            <ListItemButton role="menuitem" component="a" href={opcion.href}>
+              {opcion.icon}
+              <ListItemContent>
+                <Typography level="title-sm">{opcion.label}</Typography>
+              </ListItemContent>
+            </ListItemButton>
+          </ListItem>
+        );
+      }
+      return null;
+    });
+  };
+
   return (
     <Sheet
       className="Sidebar"
@@ -79,8 +126,8 @@ export default function Sidebar() {
           md: "none",
         },
         transition: "transform 0.4s, width 0.4s",
-        zIndex: 1,
-        height: "100dvh",
+        zIndex: 9998,
+        height: "100vh", // Corregido "100dvh" a "100vh"
         width: "var(--Sidebar-width)",
         top: 0,
         p: 2,
@@ -126,8 +173,10 @@ export default function Sidebar() {
       </Box>
       <Box sx={{ display: "flex", gap: 1, alignItems: "center", marginBottom: "10px" }}>
         <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography level="title-md">Usuario, usuario</Typography>
-          <Typography level="body-xs">Rol</Typography>
+          <Typography level="title-md">
+            {usuario.apellido}, {usuario.nombre}
+          </Typography>
+          <Typography level="body-xs">{usuario.TipoRol?.nombre}</Typography>
         </Box>
       </Box>
       <Box
@@ -150,86 +199,14 @@ export default function Sidebar() {
             "--ListItem-radius": (theme) => theme.vars.radius.sm,
           }}
         >
-          <ListItem>
-            <ListItemButton>
-              <DocumentScannerRounded />
-              <ListItemContent>
-                <Typography level="title-sm">Carta</Typography>
-              </ListItemContent>
-            </ListItemButton>
-          </ListItem>
-
-          <ListItem>
-            <ListItemButton
-              role="menuitem"
-              component="a"
-              href="/joy-ui/getting-started/templates/order-dashboard/"
-            >
-              <DeckRounded />
-              <ListItemContent>
-                <Typography level="title-sm">Mesas</Typography>
-              </ListItemContent>
-            </ListItemButton>
-          </ListItem>
-
-          <ListItem>
-            <ListItemButton
-              role="menuitem"
-              component="a"
-              href="/joy-ui/getting-started/templates/order-dashboard/"
-            >
-              <ViewListRounded />
-              <ListItemContent>
-                <Typography level="title-sm">Pedidos</Typography>
-              </ListItemContent>
-            </ListItemButton>
-          </ListItem>
-
-          <ListItem>
-            <ListItemButton
-              role="menuitem"
-              component="a"
-              href="/joy-ui/getting-started/templates/order-dashboard/"
-            >
-              <PointOfSaleRounded />
-              <ListItemContent>
-                <Typography level="title-sm">Facturacion</Typography>
-              </ListItemContent>
-            </ListItemButton>
-          </ListItem>
-
-          <ListItem>
-            <ListItemButton
-              role="menuitem"
-              component="a"
-              href="/joy-ui/getting-started/templates/order-dashboard/"
-            >
-              <AdminPanelSettingsRounded />
-              <ListItemContent>
-                <Typography level="title-sm">Maestros</Typography>
-              </ListItemContent>
-            </ListItemButton>
-          </ListItem>
-
-          <ListItem>
-            <ListItemButton
-              role="menuitem"
-              component="a"
-              href="/joy-ui/getting-started/templates/order-dashboard/"
-            >
-              <EqualizerRounded />
-              <ListItemContent>
-                <Typography level="title-sm">Reportes</Typography>
-              </ListItemContent>
-            </ListItemButton>
-          </ListItem>
+          {renderOptionsLateralMenu()}
         </List>
       </Box>
-      <Box
+      <Button
+        color="danger"
+        variant="outlined"
+        onClick={handleClickCerrarSesion}
         sx={{
-          display: "flex",
-          gap: 1,
-          alignItems: "center",
           border: "1px solid red",
           borderRadius: "5px",
         }}
@@ -239,10 +216,10 @@ export default function Sidebar() {
         </IconButton>
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Typography level="title-md" color="danger">
-            Cerrar sesion
+            Cerrar sesión
           </Typography>
         </Box>
-      </Box>
+      </Button>
     </Sheet>
   );
 }

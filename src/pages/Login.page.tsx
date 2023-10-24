@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import {
-  Box,
   Button,
   Card,
   CssBaseline,
@@ -12,11 +11,13 @@ import {
   Input,
   Stack,
   Typography,
-  formLabelClasses,
 } from "@mui/joy";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import useUrlAxio from "../hooks/urlAxio.hook";
-import useNotificacion from "../hooks/notificaciones.hook";
+import { useNotificacion } from "../hooks/notificaciones.hook";
+import { Column, Container, Row } from "../components/GridComponents";
+import CustomToast from "../components/CustomToast/CustomToast";
+import useSesion from "../hooks/usuarioLogueado.hook";
 
 interface UsuarioInterface {
   usuario: string;
@@ -31,94 +32,92 @@ const Login = () => {
   const [password, setPassword] = useState<string>("");
   const [msjError, setMsjError] = useState<string>("");
 
-  const [openNumpadUsuario, setOpenNumpadUsuario] = useState<boolean>(false);
-  const [openNumpadPassword, setOpenNumpadPassword] = useState<boolean>(false);
-
   const navigate = useNavigate();
 
   const { Notificacion, MostrarNotificacion, OcultarNotificacion } = useNotificacion();
-
+  const { setSesion, removeSesion } = useSesion();
   const { getUrlAxio } = useUrlAxio();
 
   const handleChangeVisibilityOfPassword = () => {
     setBlnVerPassword(!blnVerPassword);
   };
 
-  const loginPaciente = async (usuario: UsuarioInterface) => {
+  const blnGetUsuario = async (token: string): Promise<boolean> => {
+    let blnLoguea: boolean = false;
     try {
-      const response = await axios.post(`${getUrlAxio()}Usuarios/LoginPaciente`, {
-        nombreUsuario: usuario.usuario,
-        password: usuario.password,
+      const response = await axios.get(`${getUrlAxio()}Empleado/getMe`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.token;
+
+      if (response.data) {
+        setSesion({ ...response.data, token: token });
+      }
+
+      blnLoguea = true;
     } catch (error) {
-      setMsjError("Usuario o Password incorrecto");
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: "Error: no se pudo recuperar los datos del usuario",
+        color: "rojo",
+      });
+    } finally {
+      return blnLoguea;
+    }
+  };
+
+  const blnLoginUsuario = async (usuario: UsuarioInterface): Promise<boolean> => {
+    let blnLoguea: boolean = false;
+    try {
+      const response = await axios.post(`${getUrlAxio()}auth/Login`, {
+        user: usuario.usuario,
+        pass: usuario.password,
+      });
+      setMsjError("");
+      await blnGetUsuario(response.data);
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: "Sesion iniciada correctamente!",
+        color: "verde",
+      });
+
+      blnLoguea = true;
+    } catch (error) {
+      setMsjError("Credenciales incorrectas");
       MostrarNotificacion({
         mostrar: true, //@ts-ignore
         mensaje: "Error: " + error.response.data,
         color: "rojo",
       });
-    }
-  };
-
-  const obtenerPaciente = async (token: string, documento: string) => {
-    try {
-      const config = {
-        headers: { Authorization: `Bearer ${token}` },
-      };
-      const response = await axios.get(`${getUrlAxio()}Pacientes?documento=${documento}`, config);
-      const data = response.data[0];
-      return {
-        codigo: data.codigo,
-        hc: data.hc,
-        documentoNro: data.documentoNro,
-        documentoTipo: data.documentoTipo,
-        documentoTipoNombre: data.documentoTipoNombre,
-        nombre: data.nombre,
-        apellido: data.apellido,
-        mutual: data.mutual,
-        mutualNombre: data.mutualNombre,
-        telefono: data.telefono,
-        celular: data.celular,
-        email: data.email,
-        mutualAfiliado: data.mutualAfiliado,
-        nacimiento: data.nacimiento,
-        password: password,
-        token: token,
-      };
-    } catch (error) {
-      MostrarNotificacion({
-        mostrar: true,
-        mensaje: "Se produjo un error al intentar consultar los datos del paciente",
-        color: "rojo",
-      });
+    } finally {
+      return blnLoguea;
     }
   };
 
   const handleClickLogin = async () => {
     setCargando(true);
-    console.log(getUrlAxio());
+    let mensaje = "";
     if (usuario !== "" && password !== "") {
-      const token = await loginPaciente({ usuario, password });
-      const paciente: any = await obtenerPaciente(token, usuario);
-      if (paciente) {
-        MostrarNotificacion({
-          mostrar: true,
-          mensaje: "Sesión iniciada correctamente",
-          color: "verde",
-        });
-        navigate("/NuevoTurno");
+      const blnLogueado = await blnLoginUsuario({ usuario, password });
+      if (blnLogueado) {
+        navigate("/Portal/");
       }
     } else {
-      if (usuario !== "" && password !== "") setMsjError("Debe ingresar su documento y contraseña");
-      else {
-        if (usuario !== "") {
-          setMsjError("Debe ingresar su documento");
+      if (usuario === "" && password === "") {
+        mensaje = "Debe ingresar su usuario y contraseña";
+      } else {
+        if (usuario === "") {
+          mensaje = "Debe ingresar su usuario";
         }
-        if (password !== "") {
-          setMsjError("Debe ingresar su contraseña");
+        if (password === "") {
+          mensaje = "Debe ingresar su contraseña";
         }
       }
+      MostrarNotificacion({
+        mostrar: true, //@ts-ignore
+        mensaje: "Error: " + mensaje,
+        color: "rojo",
+      });
+      setMsjError(mensaje);
     }
 
     setCargando(false);
@@ -130,7 +129,9 @@ const Login = () => {
     setCargando(false);
   };
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    removeSesion();
+  }, []);
 
   return (
     <CssVarsProvider defaultMode="dark">
@@ -146,6 +147,7 @@ const Login = () => {
         }}
       />
       <Card
+        variant="solid"
         sx={(theme) => ({
           position: "fixed",
           left: 0,
@@ -158,11 +160,7 @@ const Login = () => {
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-
           width: "clamp(100vw - var(--Cover-width), (var(--Collapsed-breakpoint)) * 999, 100vw)",
-
-          zIndex: 1,
-          display: "flex",
           justifyContent: "center",
           alignItems: "center",
           [theme.getColorSchemeSelector("dark")]: {
@@ -170,71 +168,48 @@ const Login = () => {
           },
         })}
       >
-        <Box
+        <Container
           sx={{
-            display: "flex",
-            flexDirection: "column",
             width: "clamp(var(--Form-maxWidth), (var(--Collapsed-breakpoint) - 100vw) * 999, 100%)",
-            px: 2,
           }}
         >
-          <Box
-            component="main"
+          <Column
             sx={{
-              // border: ".25px solid",
               padding: "15px",
               my: "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-              width: 400,
-              maxWidth: "100%",
               mx: "auto",
-              borderRadius: "sm",
+              width: 400,
               backdropFilter: "blur(12px)",
-              "& form": {
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-              },
-              [`& .${formLabelClasses.asterisk}`]: {
-                visibility: "hidden",
-              },
             }}
           >
-            <Box
-              component="header"
+            <Row
               sx={{
                 py: 3,
-                display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Box
+              <Column
                 sx={{
-                  gap: 1,
-                  display: "flex",
                   alignItems: "center",
                 }}
               >
                 <Typography level="title-lg">Logo</Typography>
-              </Box>
-            </Box>
+              </Column>
+            </Row>
             <Stack gap={2} sx={{ mt: 2 }}>
               <FormControl required>
                 <Input
                   startDecorator={<Typography>Documento</Typography>}
-                  type="number"
-                  readOnly
-                  onClick={() => setOpenNumpadUsuario(true)}
+                  type="text"
                   value={usuario}
+                  onChange={(e) => setUsuario(e.target.value)}
                 />
               </FormControl>
               <FormControl required>
                 <Input
                   startDecorator={<Typography>Contraseña</Typography>}
-                  type={blnVerPassword ? "number" : "password"}
+                  type={blnVerPassword ? "text" : "password"}
                   endDecorator={
                     blnVerPassword ? (
                       <Visibility onClick={handleChangeVisibilityOfPassword} />
@@ -242,10 +217,12 @@ const Login = () => {
                       <VisibilityOff onClick={handleChangeVisibilityOfPassword} />
                     )
                   }
-                  readOnly
-                  onClick={() => setOpenNumpadPassword(true)}
                   value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
+              </FormControl>
+              <FormControl>
+                <Typography>{msjError}</Typography>
               </FormControl>
               <Stack gap={4} sx={{ mt: 2 }}>
                 <Button type="submit" onClick={handleClickSubmit} fullWidth>
@@ -253,8 +230,16 @@ const Login = () => {
                 </Button>
               </Stack>
             </Stack>
-          </Box>
-        </Box>
+          </Column>
+        </Container>
+        {Notificacion.mostrar && (
+          <CustomToast
+            color={Notificacion.color}
+            mensaje={Notificacion.mensaje}
+            mostrar={Notificacion.mostrar}
+            onClose={OcultarNotificacion}
+          />
+        )}
       </Card>
     </CssVarsProvider>
   );

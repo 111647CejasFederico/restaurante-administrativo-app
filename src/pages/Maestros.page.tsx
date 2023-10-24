@@ -7,8 +7,11 @@ import TabOtrosMaestros from "../modules/otrosMaestros.moudules/TabOtrosMaestros
 import TabUsuarios from "../modules/usuarios.modules/TabUsuarios";
 import TabPromociones from "../modules/promociones.modules/TabPromociones";
 import TabProductos from "../modules/productos.modules/TabProductos";
+import CustomToast from "../components/CustomToast/CustomToast";
+import { useNotificacion } from "../hooks/notificaciones.hook";
 
 export default function Maestros() {
+  const { Notificacion, MostrarNotificacion, OcultarNotificacion } = useNotificacion();
   return (
     <Tabs aria-label="Maestros tabs" sx={{ bgcolor: "transparent" }} defaultValue={0}>
       <TabList
@@ -28,17 +31,25 @@ export default function Maestros() {
         <Tab>Otros Maestros</Tab>
       </TabList>
       <TabPanel value={0}>
-        <TabProductos />
+        <TabProductos MostrarNotificacion={MostrarNotificacion} />
       </TabPanel>
       <TabPanel value={1}>
-        <TabPromociones />
+        <TabPromociones MostrarNotificacion={MostrarNotificacion} />
       </TabPanel>
       <TabPanel value={2}>
-        <TabUsuarios />
+        <TabUsuarios MostrarNotificacion={MostrarNotificacion} />
       </TabPanel>
       <TabPanel value={3}>
-        <TabOtrosMaestros />
+        <TabOtrosMaestros MostrarNotificacion={MostrarNotificacion} />
       </TabPanel>
+      {Notificacion.mostrar && (
+        <CustomToast
+          color={Notificacion.color}
+          mensaje={Notificacion.mensaje}
+          mostrar={Notificacion.mostrar}
+          onClose={OcultarNotificacion}
+        />
+      )}
     </Tabs>
   );
 }

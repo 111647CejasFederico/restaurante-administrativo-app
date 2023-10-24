@@ -7,8 +7,12 @@ import { Add, Edit, NoMeals } from "@mui/icons-material";
 import { Column, Container, Row } from "../../components/GridComponents";
 import ModalFormPromociones from "./ModalFormPromociones";
 import ModalDarBaja from "../../components/FeedbackComponents/ModalDarBaja";
+import { NotificacionInterface } from "../../hooks/notificaciones.hook";
 
-export default function TabPromociones() {
+interface ContainerProps {
+  MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
+}
+const TabPromociones: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
   const [openModalPromocion, setOpenModalPromocion] = useState<boolean>(false);
   const [modoModalPromocion, setModoModalPromocion] = useState<"consulta" | "registrar" | "editar">(
     "consulta"
@@ -244,13 +248,21 @@ export default function TabPromociones() {
         setOpen={setOpenModalPromocion}
         modo={modoModalPromocion}
       />
-      <ModalDarBaja
-        titulo="Dar de baja promocion"
-        texto="Esta seguro que desea dar de baja el promocion seleccionado?"
-        open={openModalDarBajaPromocion}
-        setOpen={setOpenModalDarBajaPromocion}
-        handleClickConfirmar={console.log}
-      />
+      {/* <ModalDarBaja
+        titulo={`${productoSeleccionado.habilitado ? "Dar de baja" : "Dar de alta"} promocion`}
+        texto={`Esta seguro que desea ${
+          productoSeleccionado.habilitado ? "dar de baja" : "dar de alta"
+        } la promocion seleccionada?`}
+        colorBotonNo="neutral"
+        colorBotonSi="warning"
+        textoBotonNo="Cancelar"
+        textoBotonSi={promoc.habilitado ? "Dar de baja" : "Dar de alta"}
+        open={openModalDarBajaProducto}
+        setOpen={setOpenModalDarBajaProducto}
+        handleClickConfirmar={enableDisableProducto}
+      /> */}
     </Container>
   );
-}
+};
+
+export default TabPromociones;

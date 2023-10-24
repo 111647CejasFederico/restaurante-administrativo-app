@@ -1,4 +1,4 @@
-interface AuxiliarInterface {
+export interface AuxiliarInterface {
   id: number;
   nombre: string;
   descripcion: string;

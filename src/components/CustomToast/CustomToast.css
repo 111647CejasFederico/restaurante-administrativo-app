@@ -1,0 +1,37 @@
+.toast {
+  border-radius: 10px;
+}
+/* verde */
+.toast.success {
+  background-color: #2dd36f;
+  color: #000000;
+}
+/*rojo*/
+.toast.danger {
+  background-color: #eb445a;
+  color: #ffffff;
+}
+
+/*amarillo*/
+.toast.warning {
+  background-color: #ffc409;
+  color: #000000;
+}
+
+/*blanco*/
+.toast.primary {
+  background-color: #3880ff;
+  color: #ffffff;
+}
+
+/*blanco*/
+.toast.neutral {
+  background-color: #92949c;
+  color: #000000;
+}
+
+/*blanco*/
+.toast.light {
+  background-color: #f4f5f8;
+  color: #000000;
+}

@@ -67,7 +67,6 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
     };
     try {
       const response = await axios.get(`${getUrlAxio()}/Roles`, config);
-      console.log("Roles buscados");
     } catch (e: any) {}
   };
   const getEstadosUsuario = async () => {

@@ -19,70 +19,69 @@ import {
   Textarea,
   Typography,
 } from "@mui/joy";
-import { TipoProductoInterface } from "../../interfaces/tipo.interface";
-import { NotificacionInterface, useNotificacion } from "../../hooks/notificaciones.hook";
+import { AuxiliarInterface, TipoProductoInterface } from "../../interfaces/tipo.interface";
+import { NotificacionInterface } from "../../hooks/notificaciones.hook";
 
 interface ContainerProps {
   modo?: "consulta" | "registrar" | "editar" | "cerrado";
-  productoSeleccionado?: ProductoInterface;
+  tipoAuxiliar: "TipoProducto" | "RolUsuario" | "EstadoUsuario";
+  tipoSeleccionado?: AuxiliarInterface;
   open: boolean;
   setOpen: (open: boolean) => void;
   MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
 }
 
-const ModalFormProductos: React.FC<ContainerProps> = ({
-  modo = "consulta",
+const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
+  modo = "cerrado",
+  tipoAuxiliar,
   open,
   setOpen,
-  productoSeleccionado,
+  tipoSeleccionado,
   MostrarNotificacion,
 }) => {
-  const [blnVerPassword, setBlnVerPassword] = useState(false);
-  const [producto, setProducto] = useState<ProductoInterface>({
+  const [tipo, setTipo] = useState<AuxiliarInterface>({
     id: 0,
     nombre: "",
     descripcion: "",
-    tipo: 0,
-    precio: 0,
     habilitado: false,
   });
-  const [tiposProducto, setTiposProductos] = useState<TipoProductoInterface[]>([]);
-
   const { getSesion } = useSesion();
   const { getUrlAxio } = useUrlAxio();
 
-  const getTipoProducto = async () => {
-    let config = {
-      headers: {
-        Authorization: `Bearer ${getSesion().token}`,
-      },
-    };
-    try {
-      const response = await axios.get(`${getUrlAxio()}Tipoproducto`, config);
+  const getUrlAuxiliar = (): string => {
+    switch (tipoAuxiliar) {
+      case "TipoProducto":
+        return "tipoProducto";
+      case "RolUsuario":
+        return "tipoRol";
+      case "EstadoUsuario":
+        return "tipoEstadoUsuario";
+    }
+  };
 
-      let tiposProductosResponse: ProductoInterface[] = [];
-      response.data.forEach((tipos: any) => {
-        tiposProductosResponse.push({ ...tipos });
-      });
-      setTiposProductos(tiposProductosResponse);
-    } catch (e: any) {}
+  const getlabel = (): string => {
+    switch (tipoAuxiliar) {
+      case "TipoProducto":
+        return "tipo de producto";
+      case "RolUsuario":
+        return "rol de usuario";
+      case "EstadoUsuario":
+        return "estado de usuario";
+    }
   };
 
   useEffect(() => {
-    if (productoSeleccionado && open) {
-      setProducto(productoSeleccionado);
-      getTipoProducto();
+    if (tipoSeleccionado && open) {
+      setTipo(tipoSeleccionado);
     }
     if (!open)
-      setProducto({
+      setTipo({
         id: 0,
         nombre: "",
         descripcion: "",
-        tipo: 0,
-        precio: 0,
         habilitado: false,
       });
-  }, [productoSeleccionado, open]);
+  }, [tipoSeleccionado, open]);
 
   const postProducto = async () => {
     let config = {
@@ -92,22 +91,24 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
     };
     try {
       const response = await axios.post(
-        `${getUrlAxio()}Producto`,
+        `${getUrlAxio()}${getUrlAuxiliar()}`,
         {
-          tipo: producto.tipo,
-          nombre: producto.nombre,
-          descipcion: producto.descripcion,
-          precio: producto.precio,
-          habilitado: producto.habilitado,
+          nombre: tipo.nombre,
+          descipcion: tipo.descripcion,
+          habilitado: tipo.habilitado,
         },
         config
       );
-      MostrarNotificacion({ mostrar: true, mensaje: "Nuevo producto registrado ", color: "verde" });
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: `Nuevo ${getlabel()} registrado `,
+        color: "verde",
+      });
       setOpen(false);
     } catch (e: any) {
       MostrarNotificacion({
         mostrar: true,
-        mensaje: "Error: No se pudo registrar el producto",
+        mensaje: `Error: No se pudo registrar el ${getlabel()}`,
         color: "rojo",
       });
     }
@@ -121,38 +122,32 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
     };
     try {
       const response = await axios.put(
-        `${getUrlAxio()}Producto`,
+        `${getUrlAxio()}${getUrlAuxiliar()}`,
         {
-          id: producto.id,
-          tipo: producto.tipo,
-          nombre: producto.nombre,
-          descipcion: producto.descripcion,
-          precio: producto.precio,
-          habilitado: producto.habilitado,
+          id: tipo.id,
+          nombre: tipo.nombre,
+          descripcion: tipo.descripcion,
+          habilitado: tipo.habilitado,
         },
         config
       );
       MostrarNotificacion({
         mostrar: true,
-        mensaje: "Producto modificado exitosamente",
+        mensaje: `${getlabel()[0].toUpperCase() + getlabel().slice(1)} modificado exitosamente`,
         color: "verde",
       });
       setOpen(false);
     } catch (e: any) {
       MostrarNotificacion({
         mostrar: true,
-        mensaje: "Error: No se modifico el producto",
+        mensaje: `Error: No se pudo modificar el ${getlabel()}`,
         color: "rojo",
       });
     }
   };
 
-  const handleChangeVisibilityOfPassword = () => {
-    setBlnVerPassword(!blnVerPassword);
-  };
-
   const handleChangeInput = (prop: keyof ProductoInterface, value: any) => {
-    setProducto((prevProducto) => ({
+    setTipo((prevProducto) => ({
       ...prevProducto,
       [prop]: value,
     }));
@@ -167,19 +162,15 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
     }
   };
 
-  const renderTiposProductos = (): JSX.Element[] => {
-    return tiposProducto.map((tipo) => <Option value={tipo.id}>{tipo.nombre}</Option>);
-  };
-
   return (
     <Modal open={open} onClose={() => setOpen(false)}>
       <ModalDialog size="lg">
         <DialogTitle>
           {modo === "editar"
-            ? "Editando producto"
+            ? `Editando ${getlabel()}`
             : modo === "registrar"
-            ? "Registrando producto"
-            : "Informacion de producto"}
+            ? `Registrando ${getlabel()}`
+            : `Informacion de ${getlabel()}`}
         </DialogTitle>
         <DialogContent>
           <Container display="flex" justifyContent="space-between" alignItems="center">
@@ -193,7 +184,7 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
                         size="sm"
                         required
                         placeholder="Nombre"
-                        value={producto.nombre}
+                        value={tipo.nombre}
                         onChange={(e) => handleChangeInput("nombre", e.target.value)}
                       />
                     </FormControl>
@@ -207,38 +198,8 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
                         size="sm"
                         minRows={2.5}
                         placeholder="Descripcion"
-                        value={producto.descripcion}
+                        value={tipo.descripcion}
                         onChange={(e) => handleChangeInput("descripcion", e.target.value)}
-                      />
-                    </FormControl>
-                  </Column>
-                </Row>
-              </Column>
-              <Column xs={12} md={6}>
-                <Row xs={12}>
-                  <Column xs={12} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
-                      <FormLabel>Tipo Producto</FormLabel>
-                      <Select
-                        size="sm"
-                        required
-                        value={producto.tipo}
-                        onChange={(e, value) => handleChangeInput("tipo", value)}
-                      >
-                        {renderTiposProductos()}
-                      </Select>
-                    </FormControl>
-                  </Column>
-                </Row>
-                <Row xs={12}>
-                  <Column xs={12} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
-                      <FormLabel>Precio</FormLabel>
-                      <Textarea
-                        size="sm"
-                        placeholder="Precio"
-                        value={producto.precio}
-                        onChange={(e) => handleChangeInput("precio", e.target.value)}
                       />
                     </FormControl>
                   </Column>
@@ -250,7 +211,7 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
                         label="Habilitado"
                         size="lg"
                         sx={{ border: "0px" }}
-                        checked={producto.habilitado}
+                        checked={tipo.habilitado}
                         onChange={(e) => handleChangeInput("habilitado", e.target.checked)}
                       />
                     </FormControl>
@@ -279,4 +240,4 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
   );
 };
 
-export default ModalFormProductos;
+export default ModalFormOtrosMaestros;

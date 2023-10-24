@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Tabs from "@mui/joy/Tabs";
 import TabList from "@mui/joy/TabList";
 import Tab, { tabClasses } from "@mui/joy/Tab";
@@ -17,14 +17,314 @@ import {
   Typography,
 } from "@mui/joy";
 import { Column, Container, Row } from "../../components/GridComponents";
+import { NotificacionInterface } from "../../hooks/notificaciones.hook";
+import ModalDarBaja from "../../components/FeedbackComponents/ModalDarBaja";
+import ModalFormOtrosMaestros from "./ModalFormOtrosMaestros";
+import {
+  AuxiliarInterface,
+  TipoEstadoUsuarioInterface,
+  TipoProductoInterface,
+  TipoRolInterface,
+} from "../../interfaces/tipo.interface";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import useSesion from "../../hooks/usuarioLogueado.hook";
+import useUrlAxio from "../../hooks/urlAxio.hook";
+import { Add, CheckCircle, Edit, Unpublished } from "@mui/icons-material";
 
-export default function TabOtrosMaestros() {
-  const [selectedTab, setSelectedTab] = useState<number | string | null>("TiposProducto");
+interface ContainerProps {
+  MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
+}
+const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
+  const [openModalTipo, setOpenModalTipo] = useState<boolean>(false);
+  const [modoModalTipo, setModoModalTipo] = useState<
+    "consulta" | "registrar" | "editar" | "cerrado"
+  >("cerrado");
+  const [openModalDarBajaTipo, setOpenModalDarBajaTipo] = useState<boolean>(false);
+  const [tipoSeleccionado, setTipoSeleccionado] = useState<AuxiliarInterface>({
+    id: 0,
+    nombre: "",
+    descripcion: "",
+    habilitado: false,
+  });
+  const [tiposProductos, setTiposProductos] = useState<TipoProductoInterface[]>([]);
+  const [rolesUsuario, setRolesUsuario] = useState<TipoRolInterface[]>([]);
+  const [estadosUsuario, setEstadosUsuario] = useState<TipoEstadoUsuarioInterface[]>([]);
+
+  const [selectedTab, setSelectedTab] = useState<"TipoProducto" | "RolUsuario" | "EstadoUsuario">(
+    "TipoProducto"
+  );
+
+  const { getSesion } = useSesion();
+  const { getUrlAxio } = useUrlAxio();
+
+  const getUrlAuxiliar = (): string => {
+    switch (selectedTab) {
+      case "TipoProducto":
+        return "tipoProducto";
+      case "RolUsuario":
+        return "tipoRol";
+      case "EstadoUsuario":
+        return "tipoEstadoUsuario";
+    }
+  };
+  const getlabel = (): string => {
+    switch (selectedTab) {
+      case "TipoProducto":
+        return "tipo de producto";
+      case "RolUsuario":
+        return "rol de usuario";
+      case "EstadoUsuario":
+        return "estado de usuario";
+      default:
+        return "";
+    }
+  };
+
+  const getTipoProducto = async () => {
+    try {
+      const config: AxiosRequestConfig = {
+        // params: { },
+        headers: {
+          Authorization: `Bearer ${getSesion().token}`,
+        },
+      };
+      let response: AxiosResponse = await axios.get(`${getUrlAxio()}tipoProducto`, config);
+
+      if (response.data.length !== 0) {
+        let tiposProductosResponse: TipoProductoInterface[] = [];
+        response.data.forEach((tipoProducto: any) => {
+          tiposProductosResponse.push({ ...tipoProducto });
+        });
+        setTiposProductos(tiposProductosResponse);
+      } else {
+        MostrarNotificacion({
+          mostrar: true,
+          mensaje: "No se encontraron tipos de productos",
+          color: "amarillo",
+        });
+      }
+    } catch (e) {
+      //@ts-ignore
+      MostrarNotificacion({
+        mostrar: true,
+        //@ts-ignore
+        mensaje: "Error: " + e.response.message,
+        color: "rojo",
+      });
+    }
+  };
+
+  const getRolesUsuario = async () => {
+    try {
+      const config: AxiosRequestConfig = {
+        // params: { },
+        headers: {
+          Authorization: `Bearer ${getSesion().token}`,
+        },
+      };
+      let response: AxiosResponse = await axios.get(`${getUrlAxio()}tipoRol`, config);
+
+      if (response.data.length !== 0) {
+        let rolesUsuarioResponse: TipoProductoInterface[] = [];
+        response.data.forEach((rol: any) => {
+          rolesUsuarioResponse.push({ ...rol });
+        });
+        setRolesUsuario(rolesUsuarioResponse);
+      } else {
+        MostrarNotificacion({
+          mostrar: true,
+          mensaje: "No se encontraron roles de usuario",
+          color: "amarillo",
+        });
+      }
+    } catch (e) {
+      //@ts-ignore
+      MostrarNotificacion({
+        mostrar: true,
+        //@ts-ignore
+        mensaje: "Error: " + e.response.message,
+        color: "rojo",
+      });
+    }
+  };
+
+  const getEstadosUsuario = async () => {
+    try {
+      const config: AxiosRequestConfig = {
+        // params: { },
+        headers: {
+          Authorization: `Bearer ${getSesion().token}`,
+        },
+      };
+      let response: AxiosResponse = await axios.get(`${getUrlAxio()}tipoEstadoUsuario`, config);
+
+      if (response.data.length !== 0) {
+        let estadosUsuarioResponse: TipoProductoInterface[] = [];
+        response.data.forEach((estado: any) => {
+          estadosUsuarioResponse.push({ ...estado });
+        });
+        setEstadosUsuario(estadosUsuarioResponse);
+      } else {
+        MostrarNotificacion({
+          mostrar: true,
+          mensaje: "No se encontraron estados de usuario",
+          color: "amarillo",
+        });
+      }
+    } catch (e) {
+      //@ts-ignore
+      MostrarNotificacion({
+        mostrar: true,
+        //@ts-ignore
+        mensaje: "Error: " + e.response.message,
+        color: "rojo",
+      });
+    }
+  };
+
+  const CargarMaestros = async () => {
+    getTipoProducto();
+    getRolesUsuario();
+    getEstadosUsuario();
+  };
+
+  const enableDisableTipoSeleccionado = async () => {
+    let config = {
+      headers: {
+        Authorization: `Bearer ${getSesion().token}`,
+      },
+    };
+    try {
+      const response = await axios.put(
+        `${getUrlAxio()}${getUrlAuxiliar()}`,
+        {
+          id: tipoSeleccionado.id,
+          habilitado: !tipoSeleccionado.habilitado,
+        },
+        config
+      );
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: `Estado de ${getlabel()} modificado exitosamente`,
+        color: "verde",
+      });
+      await CargarMaestros();
+    } catch (e: any) {
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: `Error: No se pudo modificar el estado del ${getlabel()}`,
+        color: "rojo",
+      });
+    }
+  };
+
+  useEffect(() => {
+    CargarMaestros();
+  }, []);
+
+  useEffect(() => {
+    if (modoModalTipo !== "cerrado" && !openModalDarBajaTipo && !openModalTipo) {
+      CargarMaestros();
+      setModoModalTipo("cerrado");
+    }
+  }, [openModalDarBajaTipo, openModalTipo, modoModalTipo]);
+
+  const handleClickRegistrarTipo = () => {
+    setOpenModalTipo(true);
+    setModoModalTipo("registrar");
+  };
+  const handleClickConsultarTipo = () => {
+    setOpenModalTipo(true);
+    setModoModalTipo("consulta");
+  };
+
+  const handleClickEditarTipo = (tipo: AuxiliarInterface) => {
+    setOpenModalTipo(true);
+    setModoModalTipo("editar");
+    setTipoSeleccionado(tipo);
+  };
+
+  const handleClickDarBajaTipo = (tipo: AuxiliarInterface) => {
+    setOpenModalDarBajaTipo(true);
+    setTipoSeleccionado(tipo);
+  };
+
+  const renderTiposProducto = (): JSX.Element[] => {
+    return tiposProductos.map((tipo) => (
+      <tr key={tipo.id}>
+        <td>{tipo.nombre}</td>
+        <td onDoubleClick={handleClickConsultarTipo}>{tipo.descripcion}</td>
+        <td onDoubleClick={handleClickConsultarTipo}>
+          {tipo.habilitado ? "Habilitado" : "Inhabilitado"}
+        </td>
+        <td style={{ alignContent: "space-between" }}>
+          <Stack direction="row" alignContent="space-around" alignItems="center">
+            <Button variant="plain" onClick={() => handleClickEditarTipo(tipo)} sx={{ p: "8px" }}>
+              <Edit />
+            </Button>
+            <Button variant="plain" onClick={() => handleClickDarBajaTipo(tipo)} sx={{ p: "8px" }}>
+              {tipo.habilitado ? <CheckCircle /> : <Unpublished />}
+            </Button>
+          </Stack>
+        </td>
+      </tr>
+    ));
+  };
+
+  const renderRolesUsuario = (): JSX.Element[] => {
+    return rolesUsuario.map((rol) => (
+      <tr key={rol.id}>
+        <td>{rol.nombre}</td>
+        <td onDoubleClick={handleClickConsultarTipo}>{rol.descripcion}</td>
+        <td onDoubleClick={handleClickConsultarTipo}>
+          {rol.habilitado ? "Habilitado" : "Inhabilitado"}
+        </td>
+        <td style={{ alignContent: "space-between" }}>
+          <Stack direction="row" alignContent="space-around" alignItems="center">
+            <Button variant="plain" onClick={() => handleClickEditarTipo(rol)} sx={{ p: "8px" }}>
+              <Edit />
+            </Button>
+            <Button variant="plain" onClick={() => handleClickDarBajaTipo(rol)} sx={{ p: "8px" }}>
+              {rol.habilitado ? <CheckCircle /> : <Unpublished />}
+            </Button>
+          </Stack>
+        </td>
+      </tr>
+    ));
+  };
+
+  const renderEstadosUsuario = (): JSX.Element[] => {
+    return estadosUsuario.map((estado) => (
+      <tr key={estado.id}>
+        <td>{estado.nombre}</td>
+        <td onDoubleClick={handleClickConsultarTipo}>{estado.descripcion}</td>
+        <td onDoubleClick={handleClickConsultarTipo}>
+          {estado.habilitado ? "Habilitado" : "Inhabilitado"}
+        </td>
+        <td style={{ alignContent: "space-between" }}>
+          <Stack direction="row" alignContent="space-around" alignItems="center">
+            <Button variant="plain" onClick={() => handleClickEditarTipo(estado)} sx={{ p: "8px" }}>
+              <Edit />
+            </Button>
+            <Button
+              variant="plain"
+              onClick={() => handleClickDarBajaTipo(estado)}
+              sx={{ p: "8px" }}
+            >
+              {estado.habilitado ? <CheckCircle /> : <Unpublished />}
+            </Button>
+          </Stack>
+        </td>
+      </tr>
+    ));
+  };
+
   return (
     <Tabs
       aria-label="Otros maestros Tab"
       defaultValue={0}
       value={selectedTab}
+      //@ts-ignore
       onChange={(e, value) => setSelectedTab(value)}
       sx={{ bgcolor: "transparent" }}
     >
@@ -39,11 +339,11 @@ export default function TabOtrosMaestros() {
           },
         }}
       >
-        <Tab value="TiposProducto">Tipos de producto</Tab>
-        <Tab value="RolesUsuario">Roles de usuario</Tab>
-        <Tab value="EstadosUsuario">Estados de usuario</Tab>
+        <Tab value="TipoProducto">Tipos de producto</Tab>
+        <Tab value="RolUsuario">Roles de usuario</Tab>
+        <Tab value="EstadoUsuario">Estados de usuario</Tab>
       </TabList>
-      <TabPanel value="TiposProducto">
+      <TabPanel value="TipoProducto">
         <Container display="flex" justifyContent="space-between" alignItems="center">
           <Row xs={12}>
             <Column xs={12}>
@@ -54,143 +354,33 @@ export default function TabOtrosMaestros() {
                       <th>Nombre</th>
                       <th style={{ width: "50%" }}>Descripcion</th>
                       <th>Habilitado</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
+                      <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
+                        <Row xs={12} sx={{ margin: 0, padding: 0 }}>
+                          <Column xs={12} sx={{ margin: 0, padding: 0 }}>
+                            <Button
+                              onClick={handleClickRegistrarTipo}
+                              sx={{ margin: 0, padding: 0 }}
+                            >
+                              <Add /> Registrar nuevo {getlabel()}
+                            </Button>
+                          </Column>
+                        </Row>
+                      </td>
                     </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
+                    {renderTiposProducto()}
                   </tbody>
                 </Table>
-              </Row>
-              <Row justifyContent="space-between" alignItems="center" xs={12}>
-                <Column xs={12} md={8.3} justifyContent="space-between">
-                  <Card>
-                    <CardContent>
-                      <Row
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        xs={12}
-                        columnSpacing={1}
-                        sx={{ flexGrow: 1 }}
-                      >
-                        <Column xs={8.3}>
-                          <FormControl>
-                            <Input placeholder="Nombre" size="md" />
-                          </FormControl>
-                          <FormControl>
-                            <Textarea placeholder="Descripcion" size="md" minRows={3} />
-                          </FormControl>
-                        </Column>
-                        <Column
-                          xs={3.3}
-                          justifyContent="space-between"
-                          sx={{
-                            gap: 1,
-                          }}
-                        >
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <FormControl>
-                                <Input
-                                  startDecorator={
-                                    <Typography sx={{ cursor: "pointer" }}>Habilitado</Typography>
-                                  }
-                                  type="checkbox"
-                                  size="md"
-                                  sx={{ border: "0px" }}
-                                />
-                              </FormControl>
-                            </Column>
-                          </Row>
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <FormControl>
-                                <Button size="md" variant="outlined" color="neutral">
-                                  <Typography>Cancelar</Typography>
-                                </Button>
-                              </FormControl>
-                            </Column>
-                          </Row>
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <FormControl>
-                                <Button size="md" variant="solid" color="success">
-                                  <Typography>Grabar</Typography>
-                                </Button>
-                              </FormControl>
-                            </Column>
-                          </Row>
-                        </Column>
-                      </Row>
-                    </CardContent>
-                  </Card>
-                </Column>
-                <Column
-                  xs={12}
-                  md={3.3}
-                  justifyContent="space-between"
-                  sx={{
-                    gap: 1,
-                  }}
-                >
-                  <Row xs={12}>
-                    <Column xs={4} md={12}>
-                      <Button size="lg" variant="outlined" color="success">
-                        Nuevo tipo de producto
-                      </Button>
-                    </Column>
-                    <Column xs={4} md={12}>
-                      <Button size="lg" variant="outlined" color="warning">
-                        Editar tipo seleccionado
-                      </Button>
-                    </Column>
-                    <Column xs={4} md={12}>
-                      <Button size="lg" variant="outlined" color="danger">
-                        Dar de baja al tipo seleccionado
-                      </Button>
-                    </Column>
-                  </Row>
-                </Column>
               </Row>
             </Column>
           </Row>
         </Container>
       </TabPanel>
-      <TabPanel value="RolesUsuario">
+      <TabPanel value="RolUsuario">
         <Container display="flex" justifyContent="space-between" alignItems="center">
           <Row xs={12}>
             <Column xs={12}>
@@ -201,143 +391,33 @@ export default function TabOtrosMaestros() {
                       <th>Nombre</th>
                       <th style={{ width: "50%" }}>Descripcion</th>
                       <th>Habilitado</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
+                      <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
+                        <Row xs={12} sx={{ margin: 0, padding: 0 }}>
+                          <Column xs={12} sx={{ margin: 0, padding: 0 }}>
+                            <Button
+                              onClick={handleClickRegistrarTipo}
+                              sx={{ margin: 0, padding: 0 }}
+                            >
+                              <Add /> Registrar nuevo {getlabel()}
+                            </Button>
+                          </Column>
+                        </Row>
+                      </td>
                     </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
+                    {renderRolesUsuario()}
                   </tbody>
                 </Table>
-              </Row>
-              <Row justifyContent="space-between" alignItems="center" xs={12}>
-                <Column xs={12} md={8.3} justifyContent="space-between">
-                  <Card>
-                    <CardContent>
-                      <Row
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        xs={12}
-                        columnSpacing={1}
-                        sx={{ flexGrow: 1 }}
-                      >
-                        <Column xs={8.3}>
-                          <FormControl>
-                            <Input placeholder="Nombre" size="md" />
-                          </FormControl>
-                          <FormControl>
-                            <Textarea placeholder="Descripcion" size="md" minRows={3} />
-                          </FormControl>
-                        </Column>
-                        <Column
-                          xs={3.3}
-                          justifyContent="space-between"
-                          sx={{
-                            gap: 1,
-                          }}
-                        >
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <FormControl>
-                                <Input
-                                  startDecorator={
-                                    <Typography sx={{ cursor: "pointer" }}>Habilitado</Typography>
-                                  }
-                                  type="checkbox"
-                                  size="md"
-                                  sx={{ border: "0px" }}
-                                />
-                              </FormControl>
-                            </Column>
-                          </Row>
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <FormControl>
-                                <Button size="md" variant="outlined" color="neutral">
-                                  <Typography>Cancelar</Typography>
-                                </Button>
-                              </FormControl>
-                            </Column>
-                          </Row>
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <FormControl>
-                                <Button size="md" variant="solid" color="success">
-                                  <Typography>Grabar</Typography>
-                                </Button>
-                              </FormControl>
-                            </Column>
-                          </Row>
-                        </Column>
-                      </Row>
-                    </CardContent>
-                  </Card>
-                </Column>
-                <Column
-                  xs={12}
-                  md={3.3}
-                  justifyContent="space-between"
-                  sx={{
-                    gap: 1,
-                  }}
-                >
-                  <Row xs={12}>
-                    <Column xs={4} md={12}>
-                      <Button size="lg" variant="outlined" color="success">
-                        Nuevo rol de usuario
-                      </Button>
-                    </Column>
-                    <Column xs={4} md={12}>
-                      <Button size="lg" variant="outlined" color="warning">
-                        Editar rol seleccionado
-                      </Button>
-                    </Column>
-                    <Column xs={4} md={12}>
-                      <Button size="lg" variant="outlined" color="danger">
-                        Dar de baja al rol seleccionado
-                      </Button>
-                    </Column>
-                  </Row>
-                </Column>
               </Row>
             </Column>
           </Row>
         </Container>
       </TabPanel>
-      <TabPanel value="EstadosUsuario">
+      <TabPanel value="EstadoUsuario">
         <Container display="flex" justifyContent="space-between" alignItems="center">
           <Row xs={12}>
             <Column xs={12}>
@@ -348,142 +428,56 @@ export default function TabOtrosMaestros() {
                       <th>Nombre</th>
                       <th style={{ width: "50%" }}>Descripcion</th>
                       <th>Habilitado</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
+                      <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
+                        <Row xs={12} sx={{ margin: 0, padding: 0 }}>
+                          <Column xs={12} sx={{ margin: 0, padding: 0 }}>
+                            <Button
+                              onClick={handleClickRegistrarTipo}
+                              sx={{ margin: 0, padding: 0 }}
+                            >
+                              <Add /> Registrar nuevo {getlabel()}
+                            </Button>
+                          </Column>
+                        </Row>
+                      </td>
                     </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                    </tr>
+                    {renderEstadosUsuario()}
                   </tbody>
                 </Table>
-              </Row>
-              <Row justifyContent="space-between" alignItems="center" xs={12}>
-                <Column xs={12} md={8.3} justifyContent="space-between">
-                  <Card>
-                    <CardContent>
-                      <Row
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        xs={12}
-                        columnSpacing={1}
-                        sx={{ flexGrow: 1 }}
-                      >
-                        <Column xs={8.3}>
-                          <FormControl>
-                            <Input placeholder="Nombre" size="md" />
-                          </FormControl>
-                          <FormControl>
-                            <Textarea placeholder="Descripcion" size="md" minRows={3} />
-                          </FormControl>
-                        </Column>
-                        <Column
-                          xs={3.3}
-                          justifyContent="space-between"
-                          sx={{
-                            gap: 1,
-                          }}
-                        >
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <FormControl>
-                                <Input
-                                  startDecorator={
-                                    <Typography sx={{ cursor: "pointer" }}>Habilitado</Typography>
-                                  }
-                                  type="checkbox"
-                                  size="md"
-                                  sx={{ border: "0px" }}
-                                />
-                              </FormControl>
-                            </Column>
-                          </Row>
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <FormControl>
-                                <Button size="md" variant="outlined" color="neutral">
-                                  <Typography>Cancelar</Typography>
-                                </Button>
-                              </FormControl>
-                            </Column>
-                          </Row>
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <FormControl>
-                                <Button size="md" variant="solid" color="success">
-                                  <Typography>Grabar</Typography>
-                                </Button>
-                              </FormControl>
-                            </Column>
-                          </Row>
-                        </Column>
-                      </Row>
-                    </CardContent>
-                  </Card>
-                </Column>
-                <Column
-                  xs={12}
-                  md={3.3}
-                  justifyContent="space-between"
-                  sx={{
-                    gap: 1,
-                  }}
-                >
-                  <Row xs={12}>
-                    <Column xs={4} md={12}>
-                      <Button size="lg" variant="outlined" color="success">
-                        Nuevo estado de usuario
-                      </Button>
-                    </Column>
-                    <Column xs={4} md={12}>
-                      <Button size="lg" variant="outlined" color="warning">
-                        Editar estado seleccionado
-                      </Button>
-                    </Column>
-                    <Column xs={4} md={12}>
-                      <Button size="lg" variant="outlined" color="danger">
-                        Dar de baja al estado seleccionado
-                      </Button>
-                    </Column>
-                  </Row>
-                </Column>
               </Row>
             </Column>
           </Row>
         </Container>
       </TabPanel>
+
+      <ModalFormOtrosMaestros
+        open={openModalTipo}
+        setOpen={setOpenModalTipo}
+        tipoSeleccionado={tipoSeleccionado}
+        modo={modoModalTipo}
+        MostrarNotificacion={MostrarNotificacion}
+        tipoAuxiliar={selectedTab}
+      />
+      <ModalDarBaja
+        titulo={`${tipoSeleccionado.habilitado ? "Dar de baja" : "Dar de alta"} producto`}
+        texto={`Esta seguro que desea ${
+          tipoSeleccionado.habilitado ? "dar de baja" : "dar de alta"
+        } el producto seleccionado?`}
+        colorBotonNo="neutral"
+        colorBotonSi="warning"
+        textoBotonNo="Cancelar"
+        textoBotonSi={tipoSeleccionado.habilitado ? "Dar de baja" : "Dar de alta"}
+        open={openModalDarBajaTipo}
+        setOpen={setOpenModalDarBajaTipo}
+        handleClickConfirmar={enableDisableTipoSeleccionado}
+      />
     </Tabs>
   );
-}
+};
+
+export default TabOtrosMaestros;

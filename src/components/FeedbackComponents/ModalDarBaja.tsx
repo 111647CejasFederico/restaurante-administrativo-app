@@ -13,6 +13,10 @@ import React from "react";
 interface ContainerProps {
   titulo: string;
   texto: string;
+  textoBotonSi: string;
+  textoBotonNo: string;
+  colorBotonSi: "danger" | "neutral" | "primary" | "success" | "warning";
+  colorBotonNo: "danger" | "neutral" | "primary" | "success" | "warning";
   open: boolean;
   setOpen: (open: boolean) => void;
   handleClickConfirmar: () => void;
@@ -24,10 +28,18 @@ const ModalDarBaja: React.FC<ContainerProps> = ({
   open,
   setOpen,
   handleClickConfirmar,
+  textoBotonSi,
+  textoBotonNo,
+  colorBotonSi,
+  colorBotonNo,
 }) => {
+  const handleClickConfirmarAccion = async () => {
+    await handleClickConfirmar();
+    setOpen(false);
+  };
   return (
     <Modal open={open} onClose={() => setOpen(false)}>
-      <ModalDialog variant="outlined" role="alertdialog">
+      <ModalDialog variant="outlined" role="contentinfo">
         <DialogTitle>
           <WarningRounded />
           {titulo}
@@ -35,11 +47,11 @@ const ModalDarBaja: React.FC<ContainerProps> = ({
         <Divider />
         <DialogContent>{texto}</DialogContent>
         <DialogActions>
-          <Button variant="solid" color="danger" onClick={() => setOpen(false)}>
-            Dar de baja
+          <Button variant="solid" color={colorBotonSi} onClick={handleClickConfirmarAccion}>
+            {textoBotonSi}
           </Button>
-          <Button variant="plain" color="neutral" onClick={() => setOpen(false)}>
-            Cancelar
+          <Button variant="plain" color={colorBotonNo} onClick={() => setOpen(false)}>
+            {textoBotonNo}
           </Button>
         </DialogActions>
       </ModalDialog>
