@@ -36,3 +36,41 @@
     transform: rotate(360deg);
   }
 }
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  display: flex;
+  flex-direction: row;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  color: #333;
+  font-size: 16px;
+}
+
+input[type="date"]::-webkit-datetime-edit-day-field {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  border: none;
+  width: 30px;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  border: none;
+  width: 50px;
+}
+
+input[type="date"]::-webkit-datetime-edit-year-field {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  border: none;
+  width: 60px;
+}
+
+input[type="date"]::-moz-placeholder {
+  color: #999;
+}

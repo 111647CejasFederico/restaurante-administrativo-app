@@ -168,7 +168,11 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
   };
 
   const renderTiposProductos = (): JSX.Element[] => {
-    return tiposProducto.map((tipo) => <Option value={tipo.id}>{tipo.nombre}</Option>);
+    return tiposProducto.map((tipo) => (
+      <Option value={tipo.id} key={tipo.id}>
+        {tipo.nombre}
+      </Option>
+    ));
   };
 
   return (

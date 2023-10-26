@@ -176,7 +176,7 @@ export default function Sidebar() {
           <Typography level="title-md">
             {usuario.apellido}, {usuario.nombre}
           </Typography>
-          <Typography level="body-xs">{usuario.TipoRol?.nombre}</Typography>
+          <Typography level="body-md">{usuario.Rol?.nombre}</Typography>
         </Box>
       </Box>
       <Box

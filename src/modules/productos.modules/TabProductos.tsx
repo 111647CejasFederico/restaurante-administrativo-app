@@ -114,10 +114,19 @@ const TabProductos: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
   const handleClickRegistrarProducto = () => {
     setOpenModalProducto(true);
     setModoModalProducto("registrar");
+    setProductoSeleccionado({
+      id: 0,
+      nombre: "",
+      descripcion: "",
+      tipo: 0,
+      precio: 0,
+      habilitado: false,
+    });
   };
-  const handleClickConsultarProducto = () => {
+  const handleClickConsultarProducto = (producto: ProductoInterface) => {
     setOpenModalProducto(true);
     setModoModalProducto("consulta");
+    setProductoSeleccionado(producto);
   };
 
   const handleClickEditarProducto = (producto: ProductoInterface) => {
@@ -135,9 +144,11 @@ const TabProductos: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
     return productos.map((producto) => (
       <tr key={producto.id}>
         <td>{producto.nombre}</td>
-        <td onDoubleClick={handleClickConsultarProducto}>{producto.TipoProducto?.nombre}</td>
-        <td onDoubleClick={handleClickConsultarProducto}>{producto.precio}</td>
-        <td onDoubleClick={handleClickConsultarProducto}>
+        <td onDoubleClick={() => handleClickConsultarProducto(producto)}>
+          {producto.TipoProducto?.nombre}
+        </td>
+        <td onDoubleClick={() => handleClickConsultarProducto(producto)}>{producto.precio}</td>
+        <td onDoubleClick={() => handleClickConsultarProducto(producto)}>
           {producto.habilitado ? "Habilitado" : "Inhabilitado"}
         </td>
         <td style={{ alignContent: "space-between" }}>

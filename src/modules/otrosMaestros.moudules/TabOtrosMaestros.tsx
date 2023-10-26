@@ -22,6 +22,7 @@ import ModalDarBaja from "../../components/FeedbackComponents/ModalDarBaja";
 import ModalFormOtrosMaestros from "./ModalFormOtrosMaestros";
 import {
   AuxiliarInterface,
+  TipoEstadoPromocionInterface,
   TipoEstadoUsuarioInterface,
   TipoProductoInterface,
   TipoRolInterface,
@@ -49,10 +50,11 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
   const [tiposProductos, setTiposProductos] = useState<TipoProductoInterface[]>([]);
   const [rolesUsuario, setRolesUsuario] = useState<TipoRolInterface[]>([]);
   const [estadosUsuario, setEstadosUsuario] = useState<TipoEstadoUsuarioInterface[]>([]);
+  const [estadosPromocion, setEstadosPromocion] = useState<TipoEstadoPromocionInterface[]>([]);
 
-  const [selectedTab, setSelectedTab] = useState<"TipoProducto" | "RolUsuario" | "EstadoUsuario">(
-    "TipoProducto"
-  );
+  const [selectedTab, setSelectedTab] = useState<
+    "TipoProducto" | "RolUsuario" | "EstadoUsuario" | "EstadoPromocion"
+  >("TipoProducto");
 
   const { getSesion } = useSesion();
   const { getUrlAxio } = useUrlAxio();
@@ -65,6 +67,8 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
         return "tipoRol";
       case "EstadoUsuario":
         return "tipoEstadoUsuario";
+      case "EstadoPromocion":
+        return "tipoEstadoPromocion";
     }
   };
   const getlabel = (): string => {
@@ -75,6 +79,8 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
         return "rol de usuario";
       case "EstadoUsuario":
         return "estado de usuario";
+      case "EstadoPromocion":
+        return "estado de promocion";
       default:
         return "";
     }
@@ -159,7 +165,7 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
       let response: AxiosResponse = await axios.get(`${getUrlAxio()}tipoEstadoUsuario`, config);
 
       if (response.data.length !== 0) {
-        let estadosUsuarioResponse: TipoProductoInterface[] = [];
+        let estadosUsuarioResponse: TipoEstadoUsuarioInterface[] = [];
         response.data.forEach((estado: any) => {
           estadosUsuarioResponse.push({ ...estado });
         });
@@ -182,10 +188,45 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
     }
   };
 
+  const getEstadosPromociones = async () => {
+    try {
+      const config: AxiosRequestConfig = {
+        // params: { },
+        headers: {
+          Authorization: `Bearer ${getSesion().token}`,
+        },
+      };
+      let response: AxiosResponse = await axios.get(`${getUrlAxio()}tipoEstadoPromocion`, config);
+
+      if (response.data.length !== 0) {
+        let estadosPromocionResponse: TipoEstadoPromocionInterface[] = [];
+        response.data.forEach((estado: any) => {
+          estadosPromocionResponse.push({ ...estado });
+        });
+        setEstadosPromocion(estadosPromocionResponse);
+      } else {
+        MostrarNotificacion({
+          mostrar: true,
+          mensaje: "No se encontraron estados de promocion",
+          color: "amarillo",
+        });
+      }
+    } catch (e) {
+      //@ts-ignore
+      MostrarNotificacion({
+        mostrar: true,
+        //@ts-ignore
+        mensaje: "Error: " + e.response.message,
+        color: "rojo",
+      });
+    }
+  };
+
   const CargarMaestros = async () => {
-    getTipoProducto();
-    getRolesUsuario();
-    getEstadosUsuario();
+    await getTipoProducto();
+    await getRolesUsuario();
+    await getEstadosUsuario();
+    await getEstadosPromociones();
   };
 
   const enableDisableTipoSeleccionado = async () => {
@@ -232,10 +273,17 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
   const handleClickRegistrarTipo = () => {
     setOpenModalTipo(true);
     setModoModalTipo("registrar");
+    setTipoSeleccionado({
+      id: 0,
+      nombre: "",
+      descripcion: "",
+      habilitado: false,
+    });
   };
-  const handleClickConsultarTipo = () => {
+  const handleClickConsultarTipo = (tipo: AuxiliarInterface) => {
     setOpenModalTipo(true);
     setModoModalTipo("consulta");
+    setTipoSeleccionado(tipo);
   };
 
   const handleClickEditarTipo = (tipo: AuxiliarInterface) => {
@@ -253,8 +301,8 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
     return tiposProductos.map((tipo) => (
       <tr key={tipo.id}>
         <td>{tipo.nombre}</td>
-        <td onDoubleClick={handleClickConsultarTipo}>{tipo.descripcion}</td>
-        <td onDoubleClick={handleClickConsultarTipo}>
+        <td onDoubleClick={() => handleClickConsultarTipo(tipo)}>{tipo.descripcion}</td>
+        <td onDoubleClick={() => handleClickConsultarTipo(tipo)}>
           {tipo.habilitado ? "Habilitado" : "Inhabilitado"}
         </td>
         <td style={{ alignContent: "space-between" }}>
@@ -275,8 +323,8 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
     return rolesUsuario.map((rol) => (
       <tr key={rol.id}>
         <td>{rol.nombre}</td>
-        <td onDoubleClick={handleClickConsultarTipo}>{rol.descripcion}</td>
-        <td onDoubleClick={handleClickConsultarTipo}>
+        <td onDoubleClick={() => handleClickConsultarTipo(rol)}>{rol.descripcion}</td>
+        <td onDoubleClick={() => handleClickConsultarTipo(rol)}>
           {rol.habilitado ? "Habilitado" : "Inhabilitado"}
         </td>
         <td style={{ alignContent: "space-between" }}>
@@ -297,8 +345,34 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
     return estadosUsuario.map((estado) => (
       <tr key={estado.id}>
         <td>{estado.nombre}</td>
-        <td onDoubleClick={handleClickConsultarTipo}>{estado.descripcion}</td>
-        <td onDoubleClick={handleClickConsultarTipo}>
+        <td onDoubleClick={() => handleClickConsultarTipo(estado)}>{estado.descripcion}</td>
+        <td onDoubleClick={() => handleClickConsultarTipo(estado)}>
+          {estado.habilitado ? "Habilitado" : "Inhabilitado"}
+        </td>
+        <td style={{ alignContent: "space-between" }}>
+          <Stack direction="row" alignContent="space-around" alignItems="center">
+            <Button variant="plain" onClick={() => handleClickEditarTipo(estado)} sx={{ p: "8px" }}>
+              <Edit />
+            </Button>
+            <Button
+              variant="plain"
+              onClick={() => handleClickDarBajaTipo(estado)}
+              sx={{ p: "8px" }}
+            >
+              {estado.habilitado ? <CheckCircle /> : <Unpublished />}
+            </Button>
+          </Stack>
+        </td>
+      </tr>
+    ));
+  };
+
+  const renderEstadosPromocion = (): JSX.Element[] => {
+    return estadosPromocion.map((estado) => (
+      <tr key={estado.id}>
+        <td>{estado.nombre}</td>
+        <td onDoubleClick={() => handleClickConsultarTipo(estado)}>{estado.descripcion}</td>
+        <td onDoubleClick={() => handleClickConsultarTipo(estado)}>
           {estado.habilitado ? "Habilitado" : "Inhabilitado"}
         </td>
         <td style={{ alignContent: "space-between" }}>
@@ -342,6 +416,7 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
         <Tab value="TipoProducto">Tipos de producto</Tab>
         <Tab value="RolUsuario">Roles de usuario</Tab>
         <Tab value="EstadoUsuario">Estados de usuario</Tab>
+        <Tab value="EstadoPromocion">Estados de promocion</Tab>
       </TabList>
       <TabPanel value="TipoProducto">
         <Container display="flex" justifyContent="space-between" alignItems="center">
@@ -447,6 +522,43 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
                       </td>
                     </tr>
                     {renderEstadosUsuario()}
+                  </tbody>
+                </Table>
+              </Row>
+            </Column>
+          </Row>
+        </Container>
+      </TabPanel>
+      <TabPanel value="EstadoPromocion">
+        <Container display="flex" justifyContent="space-between" alignItems="center">
+          <Row xs={12}>
+            <Column xs={12}>
+              <Row justifyContent="space-evenly" alignItems="center" xs={12}>
+                <Table aria-label="table" size="lg">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th style={{ width: "50%" }}>Descripcion</th>
+                      <th>Habilitado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
+                        <Row xs={12} sx={{ margin: 0, padding: 0 }}>
+                          <Column xs={12} sx={{ margin: 0, padding: 0 }}>
+                            <Button
+                              onClick={handleClickRegistrarTipo}
+                              sx={{ margin: 0, padding: 0 }}
+                            >
+                              <Add /> Registrar nuevo {getlabel()}
+                            </Button>
+                          </Column>
+                        </Row>
+                      </td>
+                    </tr>
+                    {renderEstadosPromocion()}
                   </tbody>
                 </Table>
               </Row>

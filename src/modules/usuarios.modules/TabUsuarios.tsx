@@ -1,43 +1,190 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Tabs from "@mui/joy/Tabs";
 import TabList from "@mui/joy/TabList";
 import Tab, { tabClasses } from "@mui/joy/Tab";
 import { Button, Sheet, Stack, Table } from "@mui/joy";
-import { Add, Edit, NoAccounts } from "@mui/icons-material";
+import { AccountCircle, Add, Edit, NoAccounts } from "@mui/icons-material";
 import ModalFormUsuarios from "./ModalFormUsuarios";
 import ModalDarBaja from "../../components/FeedbackComponents/ModalDarBaja";
 import { Column, Container, Row } from "../../components/GridComponents";
 import { NotificacionInterface } from "../../hooks/notificaciones.hook";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import useSesion from "../../hooks/usuarioLogueado.hook";
+import useUrlAxio from "../../hooks/urlAxio.hook";
+import { EmpleadoInterface } from "../../interfaces/empleado.interface";
+import { TipoEstadoUsuarioInterface, TipoRolInterface } from "../../interfaces/tipo.interface";
 
 interface ContainerProps {
   MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
 }
 const TabUsuarios: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
   const [openModalUsuario, setOpenModalUsuario] = useState<boolean>(false);
-  const [modoModalUsuario, setModoModalUsuario] = useState<"consulta" | "registrar" | "editar">(
-    "consulta"
-  );
+  const [modoModalUsuario, setModoModalUsuario] = useState<
+    "consulta" | "registrar" | "editar" | "cerrado"
+  >("cerrado");
   const [openModalDarBajaUsuario, setOpenModalDarBajaUsuario] = useState<boolean>(false);
+
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<EmpleadoInterface>({
+    id: 0,
+    user: "",
+    pass: "",
+    nombre: "",
+    apellido: "",
+    nroDocumento: 0,
+    rol: 0,
+    telefono: "",
+    email: "",
+    estado: 0,
+  });
+  const [usuarios, setUsuarios] = useState<EmpleadoInterface[]>([]);
+  const { getSesion } = useSesion();
+  const { getUrlAxio } = useUrlAxio();
+
+  const getUsuarios = async () => {
+    try {
+      const config: AxiosRequestConfig = {
+        // params: { },
+        headers: {
+          Authorization: `Bearer ${getSesion().token}`,
+        },
+      };
+      let response: AxiosResponse = await axios.get(`${getUrlAxio()}Empleado`, config);
+
+      if (response.data.length !== 0) {
+        let empleadosResponse: EmpleadoInterface[] = [];
+        response.data.forEach((empleado: any) => {
+          empleadosResponse.push({ ...empleado });
+        });
+        setUsuarios(empleadosResponse);
+      } else {
+        MostrarNotificacion({
+          mostrar: true,
+          mensaje: "No se encontraron usuarios",
+          color: "amarillo",
+        });
+      }
+    } catch (e) {
+      //@ts-ignore
+      MostrarNotificacion({
+        mostrar: true,
+        //@ts-ignore
+        mensaje: "Error: " + e.response.message,
+        color: "rojo",
+      });
+    }
+  };
+
+  const enableDisableUsuarioSeleccionado = async () => {
+    let config = {
+      headers: {
+        Authorization: `Bearer ${getSesion().token}`,
+      },
+    };
+    try {
+      const response = await axios.put(
+        `${getUrlAxio()}Empleado`,
+        {
+          id: usuarioSeleccionado.id,
+          estado: usuarioSeleccionado.estado === 2 ? 1 : 2,
+        },
+        config
+      );
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: `Estado de usuario modificado exitosamente`,
+        color: "verde",
+      });
+      await getUsuarios();
+    } catch (e: any) {
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: `Error: No se pudo modificar el estado del usuario`,
+        color: "rojo",
+      });
+    }
+  };
+
+  useEffect(() => {
+    getUsuarios();
+  }, []);
+
+  useEffect(() => {
+    if (modoModalUsuario !== "cerrado" && !openModalDarBajaUsuario && !openModalUsuario) {
+      getUsuarios();
+      setModoModalUsuario("cerrado");
+    }
+  }, [modoModalUsuario, openModalDarBajaUsuario, openModalUsuario]);
 
   const handleClickRegistrarUsuario = () => {
     setOpenModalUsuario(true);
     setModoModalUsuario("registrar");
+    setUsuarioSeleccionado({
+      id: 0,
+      user: "",
+      pass: "",
+      nombre: "",
+      apellido: "",
+      nroDocumento: 0,
+      rol: 0,
+      telefono: "",
+      email: "",
+      estado: 0,
+    });
   };
 
-  const handleClickEditarUsuario = () => {
+  const handleClickConsultarUsuario = (usuario: EmpleadoInterface) => {
+    setOpenModalUsuario(true);
+    setModoModalUsuario("consulta");
+    setUsuarioSeleccionado(usuario);
+  };
+
+  const handleClickEditarUsuario = (usuario: EmpleadoInterface) => {
     setOpenModalUsuario(true);
     setModoModalUsuario("editar");
+    setUsuarioSeleccionado(usuario);
+  };
+
+  const handleClickDarBajaUsuario = (usuario: EmpleadoInterface) => {
+    setOpenModalDarBajaUsuario(true);
+    setUsuarioSeleccionado(usuario);
+  };
+
+  const renderUsuarios = (): JSX.Element[] => {
+    return usuarios.map((usuario) => (
+      <tr key={usuario.id}>
+        <td>{usuario.user}</td>
+        <td onDoubleClick={() => handleClickConsultarUsuario(usuario)}>{usuario.nombre}</td>
+        <td onDoubleClick={() => handleClickConsultarUsuario(usuario)}>{usuario.apellido}</td>
+        <td onDoubleClick={() => handleClickConsultarUsuario(usuario)}>{usuario.nroDocumento}</td>
+        <td onDoubleClick={() => handleClickConsultarUsuario(usuario)}>{usuario.Rol?.nombre}</td>
+        <td onDoubleClick={() => handleClickConsultarUsuario(usuario)}>
+          {usuario.EstadoUsuario?.nombre}
+        </td>
+        <td onDoubleClick={() => handleClickConsultarUsuario(usuario)}>{usuario.telefono}</td>
+        <td style={{ alignContent: "space-between" }}>
+          <Stack direction="row" alignContent="space-around" alignItems="center">
+            <Button
+              variant="plain"
+              onClick={() => handleClickEditarUsuario(usuario)}
+              sx={{ p: "8px" }}
+            >
+              <Edit />
+            </Button>
+            <Button
+              variant="plain"
+              onClick={() => handleClickDarBajaUsuario(usuario)}
+              sx={{ p: "8px" }}
+            >
+              {usuario.estado !== 2 ? <AccountCircle /> : <NoAccounts />}
+            </Button>
+          </Stack>
+        </td>
+      </tr>
+    ));
   };
 
   return (
     <Container direction="column" justifyContent="space-evenly" alignItems="center">
-      <Row xs={12}>
-        <Column xs={12}>
-          <Button onClick={handleClickRegistrarUsuario}>
-            <Add /> Registrar nuevo usuario
-          </Button>
-        </Column>
-      </Row>
       <Row
         // variant="outlined"
         sx={{
@@ -105,194 +252,40 @@ const TabUsuarios: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
           </thead>
           <tbody>
             <tr>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td style={{ alignContent: "space-between" }}>
-                <Stack direction="row" alignContent="space-around" alignItems="center">
-                  <Button variant="plain" onClick={handleClickEditarUsuario} sx={{ p: "8px" }}>
-                    <Edit />
-                  </Button>
-                  <Button
-                    variant="plain"
-                    onClick={() => setOpenModalDarBajaUsuario(true)}
-                    sx={{ p: "8px" }}
-                  >
-                    <NoAccounts />
-                  </Button>
-                </Stack>
+              <td colSpan={8}>
+                <Row xs={12}>
+                  <Column xs={12}>
+                    <Button onClick={handleClickRegistrarUsuario}>
+                      <Add /> Registrar nuevo usuario
+                    </Button>
+                  </Column>
+                </Row>
               </td>
             </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td>
-                <Stack direction="row" alignContent="space-around" alignItems="center">
-                  <Button variant="plain" onClick={handleClickEditarUsuario} sx={{ p: "8px" }}>
-                    <Edit />
-                  </Button>
-                  <Button
-                    variant="plain"
-                    onClick={() => setOpenModalDarBajaUsuario(true)}
-                    sx={{ p: "8px" }}
-                  >
-                    <NoAccounts />
-                  </Button>
-                </Stack>
-              </td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td>
-                <Stack direction="row" alignContent="space-around" alignItems="center">
-                  <Button variant="plain" onClick={handleClickEditarUsuario} sx={{ p: "8px" }}>
-                    <Edit />
-                  </Button>
-                  <Button
-                    variant="plain"
-                    onClick={() => setOpenModalDarBajaUsuario(true)}
-                    sx={{ p: "8px" }}
-                  >
-                    <NoAccounts />
-                  </Button>
-                </Stack>
-              </td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td>
-                <Stack direction="row" alignContent="space-around" alignItems="center">
-                  <Button variant="plain" onClick={handleClickEditarUsuario} sx={{ p: "8px" }}>
-                    <Edit />
-                  </Button>
-                  <Button
-                    variant="plain"
-                    onClick={() => setOpenModalDarBajaUsuario(true)}
-                    sx={{ p: "8px" }}
-                  >
-                    <NoAccounts />
-                  </Button>
-                </Stack>
-              </td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td>
-                <Stack direction="row" alignContent="space-around" alignItems="center">
-                  <Button variant="plain" onClick={handleClickEditarUsuario} sx={{ p: "8px" }}>
-                    <Edit />
-                  </Button>
-                  <Button
-                    variant="plain"
-                    onClick={() => setOpenModalDarBajaUsuario(true)}
-                    sx={{ p: "8px" }}
-                  >
-                    <NoAccounts />
-                  </Button>
-                </Stack>
-              </td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td>
-                <Stack direction="row" alignContent="space-around" alignItems="center">
-                  <Button variant="plain" onClick={handleClickEditarUsuario} sx={{ p: "8px" }}>
-                    <Edit />
-                  </Button>
-                  <Button
-                    variant="plain"
-                    onClick={() => setOpenModalDarBajaUsuario(true)}
-                    sx={{ p: "8px" }}
-                  >
-                    <NoAccounts />
-                  </Button>
-                </Stack>
-              </td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td>
-                <Stack direction="row" alignContent="space-around" alignItems="center">
-                  <Button variant="plain" onClick={handleClickEditarUsuario} sx={{ p: "8px" }}>
-                    <Edit />
-                  </Button>
-                  <Button
-                    variant="plain"
-                    onClick={() => setOpenModalDarBajaUsuario(true)}
-                    sx={{ p: "8px" }}
-                  >
-                    <NoAccounts />
-                  </Button>
-                </Stack>
-              </td>
-            </tr>
+            {renderUsuarios()}
           </tbody>
         </Table>
       </Row>
       <ModalFormUsuarios
+        MostrarNotificacion={MostrarNotificacion}
         open={openModalUsuario}
         setOpen={setOpenModalUsuario}
         modo={modoModalUsuario}
+        usuarioSeleccionado={usuarioSeleccionado}
       />
-      {/* <ModalDarBaja
-        titulo="Dar de baja a usuario"
-        texto="Esta seguro que desea dar de baja al usuario seleccionado?"
-        open={openModalDarBajaUsuario}
-        setOpen={setOpenModalDarBajaUsuario}
-        handleClickConfirmar={console.log}
-      /> */}
-      {/* <ModalDarBaja
-        titulo={`${productoSeleccionado.habilitado ? "Dar de baja" : "Dar de alta"} usuario`}
+      <ModalDarBaja
+        titulo={`${usuarioSeleccionado.estado !== 2 ? "Dar de baja" : "Dar de alta"} usuario`}
         texto={`Esta seguro que desea ${
-          productoSeleccionado.habilitado ? "dar de baja" : "dar de alta"
+          usuarioSeleccionado.estado !== 2 ? "dar de baja" : "dar de alta"
         } al usuario seleccionado?`}
         colorBotonNo="neutral"
-        colorBotonSi={productoSeleccionado.habilitado ? "danger" : "warning"}
+        colorBotonSi={usuarioSeleccionado.estado !== 2 ? "danger" : "warning"}
         textoBotonNo="Cancelar"
-        textoBotonSi={productoSeleccionado.habilitado ? "Dar de baja" : "Dar de alta"}
-        open={openModalDarBajaProducto}
-        setOpen={setOpenModalDarBajaProducto}
-        handleClickConfirmar={enableDisableProducto}
-      /> */}
+        textoBotonSi={usuarioSeleccionado.estado !== 2 ? "Dar de baja" : "Dar de alta"}
+        open={openModalDarBajaUsuario}
+        setOpen={setOpenModalDarBajaUsuario}
+        handleClickConfirmar={enableDisableUsuarioSeleccionado}
+      />
     </Container>
   );
 };

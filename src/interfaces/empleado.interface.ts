@@ -12,8 +12,8 @@ export interface EmpleadoInterface {
   email: string;
   estado: number;
   token?: string;
-  TipoRol?: TipoRolInterface;
-  Estado?: TipoEstadoUsuarioInterface;
+  Rol?: TipoRolInterface;
+  EstadoUsuario?: TipoEstadoUsuarioInterface;
 }
 
 export type AuthType = Pick<EmpleadoInterface, "user" | "pass" | "rol" | "token">;

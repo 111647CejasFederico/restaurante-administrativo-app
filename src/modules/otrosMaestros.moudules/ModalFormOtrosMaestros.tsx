@@ -23,8 +23,8 @@ import { AuxiliarInterface, TipoProductoInterface } from "../../interfaces/tipo.
 import { NotificacionInterface } from "../../hooks/notificaciones.hook";
 
 interface ContainerProps {
-  modo?: "consulta" | "registrar" | "editar" | "cerrado";
-  tipoAuxiliar: "TipoProducto" | "RolUsuario" | "EstadoUsuario";
+  modo: "consulta" | "registrar" | "editar" | "cerrado";
+  tipoAuxiliar: "TipoProducto" | "RolUsuario" | "EstadoUsuario" | "EstadoPromocion";
   tipoSeleccionado?: AuxiliarInterface;
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -56,6 +56,8 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
         return "tipoRol";
       case "EstadoUsuario":
         return "tipoEstadoUsuario";
+      case "EstadoPromocion":
+        return "tipoEstadoPromocion";
     }
   };
 
@@ -67,6 +69,8 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
         return "rol de usuario";
       case "EstadoUsuario":
         return "estado de usuario";
+      case "EstadoPromocion":
+        return "estado de promocion";
     }
   };
 
@@ -83,7 +87,7 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
       });
   }, [tipoSeleccionado, open]);
 
-  const postProducto = async () => {
+  const postTipo = async () => {
     let config = {
       headers: {
         Authorization: `Bearer ${getSesion().token}`,
@@ -114,7 +118,7 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
     }
   };
 
-  const putProducto = async () => {
+  const putTipo = async () => {
     let config = {
       headers: {
         Authorization: `Bearer ${getSesion().token}`,
@@ -155,10 +159,10 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
 
   const handleClickSubmit = async () => {
     if (modo === "editar") {
-      await putProducto();
+      await putTipo();
     }
     if (modo === "registrar") {
-      await postProducto();
+      await postTipo();
     }
   };
 
@@ -175,7 +179,7 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
         <DialogContent>
           <Container display="flex" justifyContent="space-between" alignItems="center">
             <Row xs={12}>
-              <Column xs={12} md={6}>
+              <Column xs={12}>
                 <Row xs={12}>
                   <Column xs={12} sx={{ p: "5px" }}>
                     <FormControl disabled={modo === "consulta"}>
