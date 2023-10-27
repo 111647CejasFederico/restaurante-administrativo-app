@@ -7,6 +7,7 @@ import {
   CssBaseline,
   CssVarsProvider,
   FormControl,
+  FormLabel,
   GlobalStyles,
   Input,
   Stack,
@@ -199,16 +200,12 @@ const Login = () => {
             </Row>
             <Stack gap={2} sx={{ mt: 2 }}>
               <FormControl required>
-                <Input
-                  startDecorator={<Typography>Documento</Typography>}
-                  type="text"
-                  value={usuario}
-                  onChange={(e) => setUsuario(e.target.value)}
-                />
+                <FormLabel>Usuario</FormLabel>
+                <Input type="text" value={usuario} onChange={(e) => setUsuario(e.target.value)} />
               </FormControl>
               <FormControl required>
+                <FormLabel>Contraseña</FormLabel>
                 <Input
-                  startDecorator={<Typography>Contraseña</Typography>}
                   type={blnVerPassword ? "text" : "password"}
                   endDecorator={
                     blnVerPassword ? (
