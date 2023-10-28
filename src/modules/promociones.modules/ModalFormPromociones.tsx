@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { PromocionInterface } from "../../interfaces/promocion.interface";
+import { PromocionErrorInterface, PromocionInterface } from "../../interfaces/promocion.interface";
 import useUrlAxio from "../../hooks/urlAxio.hook";
 import useSesion from "../../hooks/usuarioLogueado.hook";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  FormHelperText,
   FormLabel,
   Input,
   List,
@@ -25,7 +26,7 @@ import {
   Typography,
 } from "@mui/joy";
 import { Column, Container, Row } from "../../components/GridComponents";
-import { Add, Backspace, Edit } from "@mui/icons-material";
+import { Add, Backspace, Edit, InfoOutlined } from "@mui/icons-material";
 import { NotificacionInterface } from "../../hooks/notificaciones.hook";
 import { TipoEstadoPromocionInterface } from "../../interfaces/tipo.interface";
 import dayjs from "dayjs";
@@ -61,6 +62,23 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
     validoSabado: false,
     validoDomingo: false,
     estado: 0,
+  });
+  const [promocionError, setPromocionError] = useState<PromocionErrorInterface>({
+    nombre: false,
+    descripcion: false,
+    precio: false,
+    fechaInicio: false,
+    fechaFin: false,
+    horaInicio: false,
+    horaFin: false,
+    validoLunes: false,
+    validoMartes: false,
+    validoMiercoles: false,
+    validoJueves: false,
+    validoViernes: false,
+    validoSabado: false,
+    validoDomingo: false,
+    estado: false,
   });
   const [estadosPromocion, setEstadosPromocioPromocion] = useState<TipoEstadoPromocionInterface[]>(
     []
@@ -132,12 +150,80 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
     CargarFormulario();
   }, [promocionSeleccionada, open]);
 
+  const ValidarFormulario = (): boolean => {
+    let errores: PromocionErrorInterface = {
+      nombre: false,
+      descripcion: false,
+      precio: false,
+      fechaInicio: false,
+      fechaFin: false,
+      horaInicio: false,
+      horaFin: false,
+      validoLunes: false,
+      validoMartes: false,
+      validoMiercoles: false,
+      validoJueves: false,
+      validoViernes: false,
+      validoSabado: false,
+      validoDomingo: false,
+      estado: false,
+    };
+
+    let pasa = true;
+    if (promocion.nombre === "") {
+      pasa = false;
+      errores.nombre = true;
+    }
+    if (promocion.descripcion === "") {
+      pasa = false;
+      errores.descripcion = true;
+    }
+    if (promocion.precio < 0) {
+      pasa = false;
+      errores.precio = true;
+    }
+    if (
+      promocion.estado === 0 ||
+      !estadosPromocion.some((estado) => estado.id === promocion.estado)
+    ) {
+      pasa = false;
+      errores.estado = true;
+    }
+    if (
+      promocion.fechaInicio === "" ||
+      dayjs(promocion.fechaFin).format("YYYY-MM-DD") >
+        dayjs(promocion.fechaInicio).format("YYYY-MM-DD")
+    ) {
+      pasa = false;
+      errores.fechaInicio = true;
+    }
+    if (
+      promocion.fechaFin === "" ||
+      dayjs(promocion.fechaInicio).format("YYYY-MM-DD") >
+        dayjs(promocion.fechaFin).format("YYYY-MM-DD")
+    ) {
+      pasa = false;
+      errores.fechaFin = true;
+    }
+    if (promocion.horaInicio === "") {
+      pasa = false;
+      errores.horaInicio = true;
+    }
+    if (promocion.horaFin === "") {
+      pasa = false;
+      errores.horaFin = true;
+    }
+
+    setPromocionError(errores);
+    return pasa;
+  };
+
   const postPromocion = async () => {
     let config = {
       headers: { Authorization: `Bearer ${getSesion().token}` },
     };
     try {
-      const response = await axios.post(
+      await axios.post(
         `${getUrlAxio()}Promocion`,
         {
           nombre: promocion.nombre,
@@ -174,7 +260,7 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
       headers: { Authorization: `Bearer ${getSesion().token}` },
     };
     try {
-      const response = await axios.put(
+      await axios.put(
         `${getUrlAxio()}Promocion`,
         {
           id: promocion.id,
@@ -219,12 +305,19 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
   };
 
   const handleClickSubmit = async () => {
-    console.log(promocion);
-    if (modo === "editar") {
-      await putPromocion();
-    }
-    if (modo === "registrar") {
-      await postPromocion();
+    if (ValidarFormulario()) {
+      if (modo === "editar") {
+        await putPromocion();
+      }
+      if (modo === "registrar") {
+        await postPromocion();
+      }
+    } else {
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: "Hay datos no validos en el formulario",
+        color: "rojo",
+      });
     }
   };
 
@@ -252,7 +345,11 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
               <Column xs={12} md={6}>
                 <Row xs={12}>
                   <Column xs={12} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
+                    <FormControl
+                      disabled={modo === "consulta"}
+                      required
+                      error={promocionError.nombre}
+                    >
                       <FormLabel>Nombre</FormLabel>
                       <Input
                         size="sm"
@@ -261,6 +358,12 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                         value={promocion.nombre}
                         onChange={(e) => handleChangeInput("nombre", e.target.value)}
                       />
+                      {promocionError.nombre && (
+                        <FormHelperText>
+                          <InfoOutlined />
+                          Dato invalido
+                        </FormHelperText>
+                      )}
                     </FormControl>
                   </Column>
                 </Row>
@@ -280,7 +383,11 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                 </Row>
                 <Row xs={12}>
                   <Column xs={12} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
+                    <FormControl
+                      disabled={modo === "consulta"}
+                      required
+                      error={promocionError.estado}
+                    >
                       <FormLabel>Estado</FormLabel>
                       <Select
                         size="sm"
@@ -290,6 +397,12 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                       >
                         {renderEstados()}
                       </Select>
+                      {promocionError.estado && (
+                        <FormHelperText>
+                          <InfoOutlined />
+                          Dato invalido
+                        </FormHelperText>
+                      )}
                     </FormControl>
                   </Column>
                 </Row>
@@ -312,7 +425,11 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                 <FormLabel>Periodo validez</FormLabel>
                 <Row xs={12}>
                   <Column xs={12} md={6} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
+                    <FormControl
+                      disabled={modo === "consulta"}
+                      required
+                      error={promocionError.fechaInicio}
+                    >
                       <FormLabel>Fecha inicio (MM/DD/YYYY)</FormLabel>
                       <Input
                         size="sm"
@@ -322,10 +439,20 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                         value={promocion.fechaInicio}
                         onChange={(e) => handleChangeInput("fechaInicio", e.target.value)}
                       />
+                      {promocionError.fechaInicio && (
+                        <FormHelperText>
+                          <InfoOutlined />
+                          Fecha invalida
+                        </FormHelperText>
+                      )}
                     </FormControl>
                   </Column>
                   <Column xs={12} md={6} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
+                    <FormControl
+                      disabled={modo === "consulta"}
+                      required
+                      error={promocionError.fechaFin}
+                    >
                       <FormLabel>Fecha Fin (MM/DD/YYYY)</FormLabel>
                       <Input
                         size="sm"
@@ -335,6 +462,12 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                         value={promocion.fechaFin}
                         onChange={(e) => handleChangeInput("fechaFin", e.target.value)}
                       />
+                      {promocionError.fechaFin && (
+                        <FormHelperText>
+                          <InfoOutlined />
+                          Fecha invalida
+                        </FormHelperText>
+                      )}
                     </FormControl>
                   </Column>
                 </Row>
@@ -342,8 +475,12 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                 <FormLabel>Horarios validez</FormLabel>
                 <Row xs={12}>
                   <Column xs={12} md={6} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
-                      <FormLabel>Fecha inicio (HH:MM AM/PM)</FormLabel>
+                    <FormControl
+                      disabled={modo === "consulta"}
+                      required
+                      error={promocionError.horaInicio}
+                    >
+                      <FormLabel>Hora inicio (HH:MM AM/PM)</FormLabel>
                       <Input
                         size="sm"
                         required
@@ -352,11 +489,21 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                         value={promocion.horaInicio}
                         onChange={(e) => handleChangeInput("horaInicio", e.target.value)}
                       />
+                      {promocionError.horaInicio && (
+                        <FormHelperText>
+                          <InfoOutlined />
+                          Hora invalido
+                        </FormHelperText>
+                      )}
                     </FormControl>
                   </Column>
                   <Column xs={12} md={6} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
-                      <FormLabel>Fecha Fin (HH:MM AM/PM)</FormLabel>
+                    <FormControl
+                      disabled={modo === "consulta"}
+                      required
+                      error={promocionError.horaFin}
+                    >
+                      <FormLabel>Hora Fin (HH:MM AM/PM)</FormLabel>
                       <Input
                         size="sm"
                         required
@@ -365,6 +512,12 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                         value={promocion.horaFin}
                         onChange={(e) => handleChangeInput("horaFin", e.target.value)}
                       />
+                      {promocionError.horaFin && (
+                        <FormHelperText>
+                          <InfoOutlined />
+                          Hora invalido
+                        </FormHelperText>
+                      )}
                     </FormControl>
                   </Column>
                 </Row>

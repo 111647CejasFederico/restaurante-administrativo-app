@@ -4,6 +4,11 @@ export interface AuxiliarInterface {
   descripcion: string;
   habilitado: boolean;
 }
+export interface AuxiliarErrorInterface {
+  nombre: boolean;
+  descripcion: boolean;
+  habilitado: boolean;
+}
 
 export interface TipoEstadoUsuarioInterface extends AuxiliarInterface {}
 export interface TipoEstadoPedidoInterface extends AuxiliarInterface {}

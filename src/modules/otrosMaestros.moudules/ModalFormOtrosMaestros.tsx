@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  FormHelperText,
   FormLabel,
   Input,
   Modal,
@@ -19,8 +20,13 @@ import {
   Textarea,
   Typography,
 } from "@mui/joy";
-import { AuxiliarInterface, TipoProductoInterface } from "../../interfaces/tipo.interface";
+import {
+  AuxiliarErrorInterface,
+  AuxiliarInterface,
+  TipoProductoInterface,
+} from "../../interfaces/tipo.interface";
 import { NotificacionInterface } from "../../hooks/notificaciones.hook";
+import { InfoOutlined } from "@mui/icons-material";
 
 interface ContainerProps {
   modo: "consulta" | "registrar" | "editar" | "cerrado";
@@ -43,6 +49,11 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
     id: 0,
     nombre: "",
     descripcion: "",
+    habilitado: false,
+  });
+  const [tipoError, setTipoError] = useState<AuxiliarErrorInterface>({
+    nombre: false,
+    descripcion: false,
     habilitado: false,
   });
   const { getSesion } = useSesion();
@@ -87,6 +98,23 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
       });
   }, [tipoSeleccionado, open]);
 
+  const ValidarFormulario = (): boolean => {
+    let errores: AuxiliarErrorInterface = {
+      nombre: false,
+      descripcion: false,
+      habilitado: false,
+    };
+
+    let pasa = true;
+    if (tipo.nombre === "") {
+      pasa = false;
+      errores.nombre = true;
+    }
+
+    setTipoError(errores);
+    return pasa;
+  };
+
   const postTipo = async () => {
     let config = {
       headers: {
@@ -94,7 +122,7 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
       },
     };
     try {
-      const response = await axios.post(
+      await axios.post(
         `${getUrlAxio()}${getUrlAuxiliar()}`,
         {
           nombre: tipo.nombre,
@@ -125,7 +153,7 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
       },
     };
     try {
-      const response = await axios.put(
+      await axios.put(
         `${getUrlAxio()}${getUrlAuxiliar()}`,
         {
           id: tipo.id,
@@ -158,11 +186,19 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
   };
 
   const handleClickSubmit = async () => {
-    if (modo === "editar") {
-      await putTipo();
-    }
-    if (modo === "registrar") {
-      await postTipo();
+    if (ValidarFormulario()) {
+      if (modo === "editar") {
+        await putTipo();
+      }
+      if (modo === "registrar") {
+        await postTipo();
+      }
+    } else {
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: "Hay datos no validos en el formulario",
+        color: "rojo",
+      });
     }
   };
 
@@ -182,7 +218,7 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
               <Column xs={12}>
                 <Row xs={12}>
                   <Column xs={12} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
+                    <FormControl disabled={modo === "consulta"} required error={tipoError.nombre}>
                       <FormLabel>Nombre</FormLabel>
                       <Input
                         size="sm"
@@ -191,6 +227,12 @@ const ModalFormOtrosMaestros: React.FC<ContainerProps> = ({
                         value={tipo.nombre}
                         onChange={(e) => handleChangeInput("nombre", e.target.value)}
                       />
+                      {tipoError.nombre && (
+                        <FormHelperText>
+                          <InfoOutlined />
+                          Dato invalido
+                        </FormHelperText>
+                      )}
                     </FormControl>
                   </Column>
                 </Row>

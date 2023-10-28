@@ -21,3 +21,21 @@ export interface PromocionInterface {
   Estado?: TipoEstadoPromocionInterface;
   DetallesPromocion?: DetallePromocionInterface[];
 }
+
+export interface PromocionErrorInterface {
+  nombre: boolean;
+  descripcion: boolean;
+  precio: boolean;
+  fechaInicio: boolean;
+  fechaFin: boolean;
+  horaInicio: boolean;
+  horaFin: boolean;
+  validoLunes: boolean;
+  validoMartes: boolean;
+  validoMiercoles: boolean;
+  validoJueves: boolean;
+  validoViernes: boolean;
+  validoSabado: boolean;
+  validoDomingo: boolean;
+  estado: boolean;
+}

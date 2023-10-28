@@ -3,13 +3,14 @@ import { Column, Container, Row } from "../../components/GridComponents";
 import axios from "axios";
 import useUrlAxio from "../../hooks/urlAxio.hook";
 import useSesion from "../../hooks/usuarioLogueado.hook";
-import { ProductoInterface } from "../../interfaces/producto.interface";
+import { ProductoErrorInterface, ProductoInterface } from "../../interfaces/producto.interface";
 import {
   Button,
   Checkbox,
   DialogContent,
   DialogTitle,
   FormControl,
+  FormHelperText,
   FormLabel,
   Input,
   Modal,
@@ -21,6 +22,7 @@ import {
 } from "@mui/joy";
 import { TipoProductoInterface } from "../../interfaces/tipo.interface";
 import { NotificacionInterface, useNotificacion } from "../../hooks/notificaciones.hook";
+import { InfoOutlined } from "@mui/icons-material";
 
 interface ContainerProps {
   modo?: "consulta" | "registrar" | "editar" | "cerrado";
@@ -46,6 +48,14 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
     precio: 0,
     habilitado: false,
   });
+  const [productoError, setProductoError] = useState<ProductoErrorInterface>({
+    nombre: false,
+    descripcion: false,
+    tipo: false,
+    precio: false,
+    habilitado: false,
+  });
+
   const [tiposProducto, setTiposProductos] = useState<TipoProductoInterface[]>([]);
 
   const { getSesion } = useSesion();
@@ -84,6 +94,32 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
       });
   }, [productoSeleccionado, open]);
 
+  const ValidarFormulario = (): boolean => {
+    let errores: ProductoErrorInterface = {
+      nombre: false,
+      descripcion: false,
+      tipo: false,
+      precio: false,
+      habilitado: false,
+    };
+
+    let pasa = true;
+    if (producto.nombre === "") {
+      pasa = false;
+      errores.nombre = true;
+    }
+    if (producto.precio <= 0) {
+      pasa = false;
+      errores.precio = true;
+    }
+    if (producto.tipo === 0 || !tiposProducto.some((tipo) => tipo.id === producto.tipo)) {
+      pasa = false;
+      errores.tipo = true;
+    }
+
+    setProductoError(errores);
+    return pasa;
+  };
   const postProducto = async () => {
     let config = {
       headers: {
@@ -91,7 +127,7 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
       },
     };
     try {
-      const response = await axios.post(
+      await axios.post(
         `${getUrlAxio()}Producto`,
         {
           tipo: producto.tipo,
@@ -120,7 +156,7 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
       },
     };
     try {
-      const response = await axios.put(
+      await axios.put(
         `${getUrlAxio()}Producto`,
         {
           id: producto.id,
@@ -147,10 +183,6 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
     }
   };
 
-  const handleChangeVisibilityOfPassword = () => {
-    setBlnVerPassword(!blnVerPassword);
-  };
-
   const handleChangeInput = (prop: keyof ProductoInterface, value: any) => {
     setProducto((prevProducto) => ({
       ...prevProducto,
@@ -159,11 +191,19 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
   };
 
   const handleClickSubmit = async () => {
-    if (modo === "editar") {
-      await putProducto();
-    }
-    if (modo === "registrar") {
-      await postProducto();
+    if (ValidarFormulario()) {
+      if (modo === "editar") {
+        await putProducto();
+      }
+      if (modo === "registrar") {
+        await postProducto();
+      }
+    } else {
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: "Hay datos no validos en el formulario",
+        color: "rojo",
+      });
     }
   };
 
@@ -191,7 +231,11 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
               <Column xs={12} md={6}>
                 <Row xs={12}>
                   <Column xs={12} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
+                    <FormControl
+                      disabled={modo === "consulta"}
+                      required
+                      error={productoError.nombre}
+                    >
                       <FormLabel>Nombre</FormLabel>
                       <Input
                         size="sm"
@@ -200,6 +244,12 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
                         value={producto.nombre}
                         onChange={(e) => handleChangeInput("nombre", e.target.value)}
                       />
+                      {productoError.nombre && (
+                        <FormHelperText>
+                          <InfoOutlined />
+                          Dato invalido
+                        </FormHelperText>
+                      )}
                     </FormControl>
                   </Column>
                 </Row>
@@ -221,7 +271,7 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
               <Column xs={12} md={6}>
                 <Row xs={12}>
                   <Column xs={12} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
+                    <FormControl disabled={modo === "consulta"} required error={productoError.tipo}>
                       <FormLabel>Tipo Producto</FormLabel>
                       <Select
                         size="sm"
@@ -231,12 +281,22 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
                       >
                         {renderTiposProductos()}
                       </Select>
+                      {productoError.tipo && (
+                        <FormHelperText>
+                          <InfoOutlined />
+                          Dato invalido
+                        </FormHelperText>
+                      )}
                     </FormControl>
                   </Column>
                 </Row>
                 <Row xs={12}>
                   <Column xs={12} sx={{ p: "5px" }}>
-                    <FormControl disabled={modo === "consulta"}>
+                    <FormControl
+                      disabled={modo === "consulta"}
+                      required
+                      error={productoError.precio}
+                    >
                       <FormLabel>Precio</FormLabel>
                       <Textarea
                         size="sm"
@@ -244,6 +304,12 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
                         value={producto.precio}
                         onChange={(e) => handleChangeInput("precio", e.target.value)}
                       />
+                      {productoError.precio && (
+                        <FormHelperText>
+                          <InfoOutlined />
+                          Dato invalido
+                        </FormHelperText>
+                      )}
                     </FormControl>
                   </Column>
                 </Row>

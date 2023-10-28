@@ -27,7 +27,7 @@ interface UsuarioInterface {
 }
 
 const Login = () => {
-  const [cargando, setCargando] = useState<boolean>(false);
+  // const [cargando, setCargando] = useState<boolean>(false);
   const [blnVerPassword, setBlnVerPassword] = useState<boolean>(false);
   const [usuario, setUsuario] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -61,9 +61,8 @@ const Login = () => {
         mensaje: "Error: no se pudo recuperar los datos del usuario",
         color: "rojo",
       });
-    } finally {
-      return blnLoguea;
     }
+    return blnLoguea;
   };
 
   const blnLoginUsuario = async (usuario: UsuarioInterface): Promise<boolean> => {
@@ -89,13 +88,12 @@ const Login = () => {
         mensaje: "Error: " + error.response.data,
         color: "rojo",
       });
-    } finally {
-      return blnLoguea;
     }
+    return blnLoguea;
   };
 
   const handleClickLogin = async () => {
-    setCargando(true);
+    // setCargando(true);
     let mensaje = "";
     if (usuario !== "" && password !== "") {
       const blnLogueado = await blnLoginUsuario({ usuario, password });
@@ -121,13 +119,13 @@ const Login = () => {
       setMsjError(mensaje);
     }
 
-    setCargando(false);
+    // setCargando(false);
   };
 
   const handleClickSubmit = async () => {
-    setCargando(true);
+    // setCargando(true);
     await handleClickLogin();
-    setCargando(false);
+    // setCargando(false);
   };
 
   useEffect(() => {

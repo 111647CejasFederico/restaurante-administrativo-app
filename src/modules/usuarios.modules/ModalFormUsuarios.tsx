@@ -4,23 +4,24 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  FormHelperText,
   FormLabel,
   Input,
   Modal,
   ModalDialog,
   Option,
   Select,
-  Typography,
 } from "@mui/joy";
 import {
   AccountCircleRounded,
   EmailRounded,
+  InfoOutlined,
   PhoneRounded,
   VisibilityOffRounded,
   VisibilityRounded,
 } from "@mui/icons-material";
 import { Column, Container, Row } from "../../components/GridComponents";
-import { EmpleadoInterface } from "../../interfaces/empleado.interface";
+import { EmpleadoErrorInterface, EmpleadoInterface } from "../../interfaces/empleado.interface";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import useUrlAxio from "../../hooks/urlAxio.hook";
 import useSesion from "../../hooks/usuarioLogueado.hook";
@@ -58,6 +59,18 @@ const ModalFormUsuarios: React.FC<ContainerProps> = ({
 
   const [rolesUsuario, setRolesUsuario] = useState<TipoRolInterface[]>([]);
   const [estadosUsuario, setEstadosUsuario] = useState<TipoEstadoUsuarioInterface[]>([]);
+  const [erroresEmpleados, setErroresEmpleado] = useState<EmpleadoErrorInterface>({
+    user: false,
+    pass: false,
+    nombre: false,
+    apellido: false,
+    nroDocumento: false,
+    rol: false,
+    telefono: false,
+    email: false,
+    estado: false,
+  });
+
   const { getUrlAxio } = useUrlAxio();
   const { getSesion } = useSesion();
 
@@ -154,14 +167,76 @@ const ModalFormUsuarios: React.FC<ContainerProps> = ({
     CargarFormulario();
   }, [usuarioSeleccionado, open]);
 
+  const ValidarFormulario = (): boolean => {
+    let errores: EmpleadoErrorInterface = {
+      user: false,
+      pass: false,
+      nombre: false,
+      apellido: false,
+      nroDocumento: false,
+      rol: false,
+      telefono: false,
+      email: false,
+      estado: false,
+    };
+
+    let pasa = true;
+    if (usuario.nombre === "" || usuario.nombre === null) {
+      pasa = false;
+      errores.nombre = true;
+    }
+    if (usuario.apellido === "" || usuario.apellido === null) {
+      pasa = false;
+      errores.apellido = true;
+    }
+    if (usuario.nroDocumento === 0 || usuario.nroDocumento === null) {
+      pasa = false;
+      errores.nroDocumento = true;
+    }
+    if (usuario.rol === null || !rolesUsuario.some((tipo) => tipo.id === usuario.rol)) {
+      pasa = false;
+      errores.rol = true;
+    }
+    if (usuario.estado === null || !estadosUsuario.some((estado) => estado.id === usuario.estado)) {
+      pasa = false;
+      errores.estado = true;
+    }
+    if (usuario.telefono === "" || usuario.telefono === null) {
+      pasa = false;
+      errores.telefono = true;
+    }
+    if (
+      usuario?.email !== "" &&
+      usuario?.email !== null &&
+      !/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g.test(
+        usuario?.email
+      )
+    ) {
+      pasa = false;
+      errores.email = true;
+    }
+    if (modo === "registrar") {
+      if (usuario.user === "" || usuario.user === null) {
+        pasa = false;
+        errores.user = true;
+      }
+      if (usuario.pass === "" || usuario.pass === null) {
+        pasa = false;
+        errores.pass = true;
+      }
+    }
+    setErroresEmpleado(errores);
+    return pasa;
+  };
+
   const postUsuario = async () => {
-    let config = {
+    const config = {
       headers: {
         Authorization: `Bearer ${getSesion().token}`,
       },
     };
     try {
-      const response = await axios.post(
+      await axios.post(
         `${getUrlAxio()}Auth/Register`,
         {
           user: usuario.user,
@@ -194,7 +269,7 @@ const ModalFormUsuarios: React.FC<ContainerProps> = ({
       },
     };
     try {
-      const response = await axios.put(
+      await axios.put(
         `${getUrlAxio()}Empleado`,
         {
           id: usuario.id,
@@ -235,11 +310,19 @@ const ModalFormUsuarios: React.FC<ContainerProps> = ({
   };
 
   const handleClickSubmit = async () => {
-    if (modo === "editar") {
-      await putUsuario();
-    }
-    if (modo === "registrar") {
-      await postUsuario();
+    if (ValidarFormulario()) {
+      if (modo === "editar") {
+        await putUsuario();
+      }
+      if (modo === "registrar") {
+        await postUsuario();
+      }
+    } else {
+      MostrarNotificacion({
+        mostrar: true,
+        mensaje: "Hay datos invalidos en el formulario",
+        color: "rojo",
+      });
     }
   };
 
@@ -273,7 +356,11 @@ const ModalFormUsuarios: React.FC<ContainerProps> = ({
           <Container display="flex" justifyContent="space-between" alignItems="center">
             <Row xs={12}>
               <Column xs={12} md={6} sx={{ p: "5px" }}>
-                <FormControl disabled={modo === "consulta"}>
+                <FormControl
+                  disabled={modo === "consulta"}
+                  required
+                  error={erroresEmpleados.nombre}
+                >
                   <FormLabel>Nombre</FormLabel>
                   <Input
                     size="md"
@@ -282,10 +369,20 @@ const ModalFormUsuarios: React.FC<ContainerProps> = ({
                     value={usuario.nombre}
                     onChange={(e) => handleChangeInput("nombre", e.target.value)}
                   />
+                  {erroresEmpleados.nombre && (
+                    <FormHelperText>
+                      <InfoOutlined />
+                      Dato invalido
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Column>
               <Column xs={12} md={6} sx={{ p: "5px" }}>
-                <FormControl disabled={modo === "consulta"}>
+                <FormControl
+                  disabled={modo === "consulta"}
+                  required
+                  error={erroresEmpleados.apellido}
+                >
                   <FormLabel>Apellido</FormLabel>
                   <Input
                     size="md"
@@ -294,12 +391,22 @@ const ModalFormUsuarios: React.FC<ContainerProps> = ({
                     value={usuario.apellido}
                     onChange={(e) => handleChangeInput("apellido", e.target.value)}
                   />
+                  {erroresEmpleados.apellido && (
+                    <FormHelperText>
+                      <InfoOutlined />
+                      Dato invalido
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Column>
             </Row>
             <Row xs={12}>
               <Column xs={12} md={6} sx={{ p: "5px" }}>
-                <FormControl disabled={modo === "consulta"}>
+                <FormControl
+                  disabled={modo === "consulta"}
+                  required
+                  error={erroresEmpleados.nroDocumento}
+                >
                   <FormLabel>Nro Documento</FormLabel>
                   <Input
                     size="md"
@@ -308,54 +415,85 @@ const ModalFormUsuarios: React.FC<ContainerProps> = ({
                     value={usuario.nroDocumento}
                     onChange={(e) => handleChangeInput("nroDocumento", e.target.value)}
                   />
+                  {erroresEmpleados.nroDocumento && (
+                    <FormHelperText>
+                      <InfoOutlined />
+                      Dato invalido
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Column>
             </Row>
             <Row xs={12}>
               <Column xs={12} md={6} sx={{ p: "5px" }}>
-                <FormControl disabled={modo === "consulta"}>
+                <FormControl
+                  disabled={modo === "consulta"}
+                  required
+                  error={erroresEmpleados.telefono}
+                >
                   <FormLabel>Telefono</FormLabel>
                   <Input
                     size="md"
                     type="tel"
+                    placeholder="Telefono"
+                    startDecorator={<PhoneRounded />}
                     required
                     value={usuario.telefono}
                     onChange={(e) => handleChangeInput("telefono", e.target.value)}
-                    startDecorator={<PhoneRounded />}
-                    placeholder="Telefono"
                   />
+                  {erroresEmpleados.telefono && (
+                    <FormHelperText>
+                      <InfoOutlined />
+                      Dato invalido
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Column>
               <Column xs={12} md={6} sx={{ p: "5px" }}>
-                <FormControl disabled={modo === "consulta"}>
+                <FormControl disabled={modo === "consulta"} error={erroresEmpleados.email}>
                   <FormLabel>Email</FormLabel>
                   <Input
                     size="md"
                     type="email"
+                    placeholder="Email"
                     value={usuario.email}
                     onChange={(e) => handleChangeInput("email", e.target.value)}
                     startDecorator={<EmailRounded />}
-                    placeholder="Email"
                   />
+                  {erroresEmpleados.email && (
+                    <FormHelperText>
+                      <InfoOutlined />
+                      Dato invalido
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Column>
             </Row>
             <Row xs={12}>
               <Column xs={12} md={6} sx={{ p: "5px" }}>
-                <FormControl disabled={modo === "consulta"}>
+                <FormControl disabled={modo === "consulta"} required error={erroresEmpleados.rol}>
                   <FormLabel>Rol</FormLabel>
                   <Select
                     size="md"
-                    required
                     value={usuario.rol}
                     onChange={(e, value) => handleChangeInput("rol", value)}
                   >
                     {renderRoles()}
                   </Select>
+                  {erroresEmpleados.rol && (
+                    <FormHelperText>
+                      <InfoOutlined />
+                      Dato invalido
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Column>
               <Column xs={12} md={6} sx={{ p: "5px" }}>
-                <FormControl disabled={modo === "consulta"}>
+                <FormControl
+                  disabled={modo === "consulta"}
+                  required
+                  error={erroresEmpleados.estado}
+                >
                   <FormLabel>Estado</FormLabel>
                   <Select
                     size="md"
@@ -365,6 +503,12 @@ const ModalFormUsuarios: React.FC<ContainerProps> = ({
                   >
                     {renderEstados()}
                   </Select>
+                  {erroresEmpleados.estado && (
+                    <FormHelperText>
+                      <InfoOutlined />
+                      Dato invalido
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Column>
             </Row>
@@ -380,6 +524,12 @@ const ModalFormUsuarios: React.FC<ContainerProps> = ({
                     startDecorator={<AccountCircleRounded />}
                     placeholder="Usuario"
                   />
+                  {erroresEmpleados.user && (
+                    <FormHelperText>
+                      <InfoOutlined />
+                      Usuario invalida
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Column>
               {modo === "registrar" && (
@@ -401,6 +551,12 @@ const ModalFormUsuarios: React.FC<ContainerProps> = ({
                       }
                       placeholder="Contraseña"
                     />
+                    {erroresEmpleados.pass && (
+                      <FormHelperText>
+                        <InfoOutlined />
+                        Contraseña invalida
+                      </FormHelperText>
+                    )}
                   </FormControl>
                 </Column>
               )}

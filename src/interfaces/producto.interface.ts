@@ -9,3 +9,11 @@ export interface ProductoInterface {
   habilitado: boolean;
   TipoProducto?: TipoProductoInterface;
 }
+
+export interface ProductoErrorInterface {
+  nombre: boolean;
+  descripcion: boolean;
+  tipo: boolean;
+  precio: boolean;
+  habilitado: boolean;
+}

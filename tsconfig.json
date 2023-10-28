@@ -9,7 +9,6 @@
     /* Bundler mode */
     "allowJs": true,
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "isolatedModules": true,

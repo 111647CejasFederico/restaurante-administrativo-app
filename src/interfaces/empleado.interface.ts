@@ -16,4 +16,16 @@ export interface EmpleadoInterface {
   EstadoUsuario?: TipoEstadoUsuarioInterface;
 }
 
+export interface EmpleadoErrorInterface {
+  user: boolean;
+  pass: boolean;
+  nombre: boolean;
+  apellido: boolean;
+  nroDocumento: boolean;
+  rol: boolean;
+  telefono: boolean;
+  email: boolean;
+  estado: boolean;
+}
+
 export type AuthType = Pick<EmpleadoInterface, "user" | "pass" | "rol" | "token">;
