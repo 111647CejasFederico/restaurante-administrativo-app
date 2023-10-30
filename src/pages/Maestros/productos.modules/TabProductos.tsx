@@ -2,14 +2,14 @@ import React, { ReactNode, useEffect, useState } from "react";
 
 import { Button, Stack, Table } from "@mui/joy";
 import { Add, Edit, Fastfood, NoFood } from "@mui/icons-material";
-import { Column, Container, Row } from "../../components/GridComponents";
+import { Column, Container, Row } from "../../../components/GridComponents";
 import ModalFormProductos from "./ModalFormProductos";
-import ModalDarBaja from "../../components/FeedbackComponents/ModalDarBaja";
-import { ProductoInterface } from "../../interfaces/producto.interface";
-import useUrlAxio from "../../hooks/urlAxio.hook";
+import ModalDarBaja from "../../../components/FeedbackComponents/ModalDarBaja";
+import { ProductoInterface } from "../../../interfaces/producto.interface";
+import useUrlAxio from "../../../hooks/urlAxio.hook";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import { NotificacionInterface, useNotificacion } from "../../hooks/notificaciones.hook";
-import useSesion from "../../hooks/usuarioLogueado.hook";
+import { NotificacionInterface, useNotificacion } from "../../../hooks/notificaciones.hook";
+import useSesion from "../../../hooks/usuarioLogueado.hook";
 
 interface ContainerProps {
   MostrarNotificacion: (Notificacion: NotificacionInterface) => void;

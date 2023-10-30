@@ -17,7 +17,7 @@ import CardOverflow from "@mui/joy/CardOverflow";
 import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
 import AccessTimeFilledRoundedIcon from "@mui/icons-material/AccessTimeFilledRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
-import Maestros from "../../pages/Maestros.page";
+import Maestros from "../../pages/Maestros/Maestros.page";
 
 export default function MainContainer() {
   return (

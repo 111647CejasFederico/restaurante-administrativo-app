@@ -3,12 +3,12 @@ import Tabs from "@mui/joy/Tabs";
 import TabList from "@mui/joy/TabList";
 import Tab, { tabClasses } from "@mui/joy/Tab";
 import TabPanel from "@mui/joy/TabPanel";
-import TabOtrosMaestros from "../modules/otrosMaestros.moudules/TabOtrosMaestros";
-import TabUsuarios from "../modules/usuarios.modules/TabUsuarios";
-import TabPromociones from "../modules/promociones.modules/TabPromociones";
-import TabProductos from "../modules/productos.modules/TabProductos";
-import CustomToast from "../components/CustomToast/CustomToast";
-import { useNotificacion } from "../hooks/notificaciones.hook";
+import CustomToast from "../../components/CustomToast/CustomToast";
+import { useNotificacion } from "../../hooks/notificaciones.hook";
+import TabOtrosMaestros from "./otrosMaestros.moudules/TabOtrosMaestros";
+import TabUsuarios from "./usuarios.modules/TabUsuarios";
+import TabPromociones from "./promociones.modules/TabPromociones";
+import TabProductos from "./productos.modules/TabProductos";
 
 export default function Maestros() {
   const { Notificacion, MostrarNotificacion, OcultarNotificacion } = useNotificacion();

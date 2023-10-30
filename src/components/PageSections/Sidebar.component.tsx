@@ -209,16 +209,13 @@ export default function Sidebar() {
         sx={{
           border: "1px solid red",
           borderRadius: "5px",
+          alignContent: "center",
         }}
+        startDecorator={<LogoutRoundedIcon />}
       >
-        <IconButton size="sm" variant="plain" color="danger">
-          <LogoutRoundedIcon />
-        </IconButton>
-        <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography level="title-md" color="danger">
-            Cerrar sesión
-          </Typography>
-        </Box>
+        <Typography level="title-md" color="danger">
+          Cerrar sesión
+        </Typography>
       </Button>
     </Sheet>
   );

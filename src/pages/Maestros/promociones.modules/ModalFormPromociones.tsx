@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { PromocionErrorInterface, PromocionInterface } from "../../interfaces/promocion.interface";
-import useUrlAxio from "../../hooks/urlAxio.hook";
-import useSesion from "../../hooks/usuarioLogueado.hook";
+import {
+  PromocionErrorInterface,
+  PromocionInterface,
+} from "../../../interfaces/promocion.interface";
+import useUrlAxio from "../../../hooks/urlAxio.hook";
+import useSesion from "../../../hooks/usuarioLogueado.hook";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import {
   Button,
@@ -25,10 +28,10 @@ import {
   Textarea,
   Typography,
 } from "@mui/joy";
-import { Column, Container, Row } from "../../components/GridComponents";
+import { Column, Container, Row } from "../../../components/GridComponents";
 import { Add, Backspace, Edit, InfoOutlined } from "@mui/icons-material";
-import { NotificacionInterface } from "../../hooks/notificaciones.hook";
-import { TipoEstadoPromocionInterface } from "../../interfaces/tipo.interface";
+import { NotificacionInterface } from "../../../hooks/notificaciones.hook";
+import { TipoEstadoPromocionInterface } from "../../../interfaces/tipo.interface";
 import dayjs from "dayjs";
 interface ContainerProps {
   modo?: "consulta" | "registrar" | "editar" | "cerrado";

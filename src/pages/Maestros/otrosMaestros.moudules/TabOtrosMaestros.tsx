@@ -10,15 +10,16 @@ import {
   FormControl,
   Grid,
   Input,
+  Sheet,
   Stack,
   TabPanel,
   Table,
   Textarea,
   Typography,
 } from "@mui/joy";
-import { Column, Container, Row } from "../../components/GridComponents";
-import { NotificacionInterface } from "../../hooks/notificaciones.hook";
-import ModalDarBaja from "../../components/FeedbackComponents/ModalDarBaja";
+import { Column, Container, Row } from "../../../components/GridComponents";
+import { NotificacionInterface } from "../../../hooks/notificaciones.hook";
+import ModalDarBaja from "../../../components/FeedbackComponents/ModalDarBaja";
 import ModalFormOtrosMaestros from "./ModalFormOtrosMaestros";
 import {
   AuxiliarInterface,
@@ -26,11 +27,12 @@ import {
   TipoEstadoUsuarioInterface,
   TipoProductoInterface,
   TipoRolInterface,
-} from "../../interfaces/tipo.interface";
+} from "../../../interfaces/tipo.interface";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import useSesion from "../../hooks/usuarioLogueado.hook";
-import useUrlAxio from "../../hooks/urlAxio.hook";
+import useSesion from "../../../hooks/usuarioLogueado.hook";
+import useUrlAxio from "../../../hooks/urlAxio.hook";
 import { Add, CheckCircle, Edit, Unpublished } from "@mui/icons-material";
+import CustomTable from "../../../components/CustomTable";
 
 interface ContainerProps {
   MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
@@ -423,33 +425,66 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
           <Row xs={12}>
             <Column xs={12}>
               <Row justifyContent="space-evenly" alignItems="center" xs={12}>
-                <Table aria-label="table" size="lg">
-                  <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th style={{ width: "50%" }}>Descripcion</th>
-                      <th>Habilitado</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
-                        <Row xs={12} sx={{ margin: 0, padding: 0 }}>
-                          <Column xs={12} sx={{ margin: 0, padding: 0 }}>
-                            <Button
-                              onClick={handleClickRegistrarTipo}
-                              sx={{ margin: 0, padding: 0 }}
-                            >
-                              <Add /> Registrar nuevo {getlabel()}
-                            </Button>
-                          </Column>
-                        </Row>
-                      </td>
-                    </tr>
-                    {renderTiposProducto()}
-                  </tbody>
-                </Table>
+                <Sheet
+                  variant="outlined"
+                  sx={{ width: "100%", boxShadow: "sm", borderRadius: "sm", p: "5px" }}
+                >
+                  {/* <Table
+                    size="lg"
+                    sx={{
+                      "--TableCell-selectedBackground": (theme) =>
+                        theme.vars.palette.success.softBg,
+                      "& thead th:nth-of-type(2)": { width: "40px" },
+                      "& tr > *:nth-of-type(n+3)": { alignContent: "center" },
+                    }}
+                  >
+                    <thead>
+                      <tr>
+                        <th>Nombre</th>
+                        <th style={{ width: "50%" }}>Descripcion</th>
+                        <th>Habilitado</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
+                          <Row xs={12}>
+                            <Column xs={12}>
+                              <Button onClick={handleClickRegistrarTipo}>
+                                <Add /> Registrar nuevo {getlabel()}
+                              </Button>
+                            </Column>
+                          </Row>
+                        </td>
+                      </tr>
+                      {renderTiposProducto()}
+                    </tbody>
+                  </Table> */}
+                  <CustomTable<TipoProductoInterface>
+                    data={tiposProductos}
+                    headCells={[
+                      { disablePadding: false, id: "nombre", label: "Nombre", numeric: false },
+                      {
+                        disablePadding: false,
+                        id: "descripcion",
+                        label: "Descripcion",
+                        numeric: false,
+                      },
+                      {
+                        disablePadding: false,
+                        id: "habilitado",
+                        label: "Habilitado",
+                        numeric: false,
+                      },
+                    ]}
+                    showCheckbox={false}
+                    visibleColumns={new Set(["nombre", "descripcion", "habilitado"])}
+                    onSelectedChange={console.log}
+                    labelAgregar="Agregar tipo producto"
+                    handleClickRegistrar={handleClickRegistrarTipo}
+                  />
+                </Sheet>
               </Row>
             </Column>
           </Row>
@@ -460,33 +495,43 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
           <Row xs={12}>
             <Column xs={12}>
               <Row justifyContent="space-evenly" alignItems="center" xs={12}>
-                <Table aria-label="table" size="lg">
-                  <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th style={{ width: "50%" }}>Descripcion</th>
-                      <th>Habilitado</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
-                        <Row xs={12} sx={{ margin: 0, padding: 0 }}>
-                          <Column xs={12} sx={{ margin: 0, padding: 0 }}>
-                            <Button
-                              onClick={handleClickRegistrarTipo}
-                              sx={{ margin: 0, padding: 0 }}
-                            >
-                              <Add /> Registrar nuevo {getlabel()}
-                            </Button>
-                          </Column>
-                        </Row>
-                      </td>
-                    </tr>
-                    {renderRolesUsuario()}
-                  </tbody>
-                </Table>
+                <Sheet
+                  variant="outlined"
+                  sx={{ width: "100%", boxShadow: "sm", borderRadius: "sm", p: "5px" }}
+                >
+                  <Table
+                    size="lg"
+                    sx={{
+                      "--TableCell-selectedBackground": (theme) =>
+                        theme.vars.palette.success.softBg,
+                      "& thead th:nth-of-type(2)": { width: "40px" },
+                      "& tr > *:nth-of-type(n+3)": { alignContent: "center" },
+                    }}
+                  >
+                    <thead>
+                      <tr>
+                        <th>Nombre</th>
+                        <th style={{ width: "50%" }}>Descripcion</th>
+                        <th>Habilitado</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
+                          <Row xs={12}>
+                            <Column xs={12}>
+                              <Button onClick={handleClickRegistrarTipo}>
+                                <Add /> Registrar nuevo {getlabel()}
+                              </Button>
+                            </Column>
+                          </Row>
+                        </td>
+                      </tr>
+                      {renderRolesUsuario()}
+                    </tbody>
+                  </Table>
+                </Sheet>
               </Row>
             </Column>
           </Row>
@@ -497,33 +542,43 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
           <Row xs={12}>
             <Column xs={12}>
               <Row justifyContent="space-evenly" alignItems="center" xs={12}>
-                <Table aria-label="table" size="lg">
-                  <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th style={{ width: "50%" }}>Descripcion</th>
-                      <th>Habilitado</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
-                        <Row xs={12} sx={{ margin: 0, padding: 0 }}>
-                          <Column xs={12} sx={{ margin: 0, padding: 0 }}>
-                            <Button
-                              onClick={handleClickRegistrarTipo}
-                              sx={{ margin: 0, padding: 0 }}
-                            >
-                              <Add /> Registrar nuevo {getlabel()}
-                            </Button>
-                          </Column>
-                        </Row>
-                      </td>
-                    </tr>
-                    {renderEstadosUsuario()}
-                  </tbody>
-                </Table>
+                <Sheet
+                  variant="outlined"
+                  sx={{ width: "100%", boxShadow: "sm", borderRadius: "sm", p: "5px" }}
+                >
+                  <Table
+                    size="lg"
+                    sx={{
+                      "--TableCell-selectedBackground": (theme) =>
+                        theme.vars.palette.success.softBg,
+                      "& thead th:nth-of-type(2)": { width: "40px" },
+                      "& tr > *:nth-of-type(n+3)": { alignContent: "center" },
+                    }}
+                  >
+                    <thead>
+                      <tr>
+                        <th>Nombre</th>
+                        <th style={{ width: "50%" }}>Descripcion</th>
+                        <th>Habilitado</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
+                          <Row xs={12}>
+                            <Column xs={12}>
+                              <Button onClick={handleClickRegistrarTipo}>
+                                <Add /> Registrar nuevo {getlabel()}
+                              </Button>
+                            </Column>
+                          </Row>
+                        </td>
+                      </tr>
+                      {renderEstadosUsuario()}
+                    </tbody>
+                  </Table>
+                </Sheet>
               </Row>
             </Column>
           </Row>
@@ -534,33 +589,43 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
           <Row xs={12}>
             <Column xs={12}>
               <Row justifyContent="space-evenly" alignItems="center" xs={12}>
-                <Table aria-label="table" size="lg">
-                  <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th style={{ width: "50%" }}>Descripcion</th>
-                      <th>Habilitado</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
-                        <Row xs={12} sx={{ margin: 0, padding: 0 }}>
-                          <Column xs={12} sx={{ margin: 0, padding: 0 }}>
-                            <Button
-                              onClick={handleClickRegistrarTipo}
-                              sx={{ margin: 0, padding: 0 }}
-                            >
-                              <Add /> Registrar nuevo {getlabel()}
-                            </Button>
-                          </Column>
-                        </Row>
-                      </td>
-                    </tr>
-                    {renderEstadosPromocion()}
-                  </tbody>
-                </Table>
+                <Sheet
+                  variant="outlined"
+                  sx={{ width: "100%", boxShadow: "sm", borderRadius: "sm", p: "5px" }}
+                >
+                  <Table
+                    size="lg"
+                    sx={{
+                      "--TableCell-selectedBackground": (theme) =>
+                        theme.vars.palette.success.softBg,
+                      "& thead th:nth-of-type(2)": { width: "40px" },
+                      "& tr > *:nth-of-type(n+3)": { alignContent: "center" },
+                    }}
+                  >
+                    <thead>
+                      <tr>
+                        <th>Nombre</th>
+                        <th style={{ width: "50%" }}>Descripcion</th>
+                        <th>Habilitado</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
+                          <Row xs={12}>
+                            <Column xs={12}>
+                              <Button onClick={handleClickRegistrarTipo}>
+                                <Add /> Registrar nuevo {getlabel()}
+                              </Button>
+                            </Column>
+                          </Row>
+                        </td>
+                      </tr>
+                      {renderEstadosPromocion()}
+                    </tbody>
+                  </Table>
+                </Sheet>
               </Row>
             </Column>
           </Row>

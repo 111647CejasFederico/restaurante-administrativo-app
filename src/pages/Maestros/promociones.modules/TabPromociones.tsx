@@ -4,14 +4,14 @@ import TabList from "@mui/joy/TabList";
 import Tab, { tabClasses } from "@mui/joy/Tab";
 import { Button, Stack, Table } from "@mui/joy";
 import { Add, Edit, Fastfood, NoFood, NoMeals } from "@mui/icons-material";
-import { Column, Container, Row } from "../../components/GridComponents";
+import { Column, Container, Row } from "../../../components/GridComponents";
 import ModalFormPromociones from "./ModalFormPromociones";
-import ModalDarBaja from "../../components/FeedbackComponents/ModalDarBaja";
-import { NotificacionInterface } from "../../hooks/notificaciones.hook";
-import { PromocionInterface } from "../../interfaces/promocion.interface";
+import ModalDarBaja from "../../../components/FeedbackComponents/ModalDarBaja";
+import { NotificacionInterface } from "../../../hooks/notificaciones.hook";
+import { PromocionInterface } from "../../../interfaces/promocion.interface";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import useSesion from "../../hooks/usuarioLogueado.hook";
-import useUrlAxio from "../../hooks/urlAxio.hook";
+import useSesion from "../../../hooks/usuarioLogueado.hook";
+import useUrlAxio from "../../../hooks/urlAxio.hook";
 import dayjs from "dayjs";
 
 interface ContainerProps {

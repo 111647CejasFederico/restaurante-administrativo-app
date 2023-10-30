@@ -20,13 +20,13 @@ import {
   VisibilityOffRounded,
   VisibilityRounded,
 } from "@mui/icons-material";
-import { Column, Container, Row } from "../../components/GridComponents";
-import { EmpleadoErrorInterface, EmpleadoInterface } from "../../interfaces/empleado.interface";
+import { Column, Container, Row } from "../../../components/GridComponents";
+import { EmpleadoErrorInterface, EmpleadoInterface } from "../../../interfaces/empleado.interface";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import useUrlAxio from "../../hooks/urlAxio.hook";
-import useSesion from "../../hooks/usuarioLogueado.hook";
-import { NotificacionInterface } from "../../hooks/notificaciones.hook";
-import { TipoEstadoUsuarioInterface, TipoRolInterface } from "../../interfaces/tipo.interface";
+import useUrlAxio from "../../../hooks/urlAxio.hook";
+import useSesion from "../../../hooks/usuarioLogueado.hook";
+import { NotificacionInterface } from "../../../hooks/notificaciones.hook";
+import { TipoEstadoUsuarioInterface, TipoRolInterface } from "../../../interfaces/tipo.interface";
 
 interface ContainerProps {
   modo?: "consulta" | "registrar" | "editar" | "cerrado";

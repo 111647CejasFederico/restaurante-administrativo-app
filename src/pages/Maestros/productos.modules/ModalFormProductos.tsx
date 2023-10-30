@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Column, Container, Row } from "../../components/GridComponents";
+import { Column, Container, Row } from "../../../components/GridComponents";
 import axios from "axios";
-import useUrlAxio from "../../hooks/urlAxio.hook";
-import useSesion from "../../hooks/usuarioLogueado.hook";
-import { ProductoErrorInterface, ProductoInterface } from "../../interfaces/producto.interface";
+import useUrlAxio from "../../../hooks/urlAxio.hook";
+import useSesion from "../../../hooks/usuarioLogueado.hook";
+import { ProductoErrorInterface, ProductoInterface } from "../../../interfaces/producto.interface";
 import {
   Button,
   Checkbox,
@@ -20,8 +20,8 @@ import {
   Textarea,
   Typography,
 } from "@mui/joy";
-import { TipoProductoInterface } from "../../interfaces/tipo.interface";
-import { NotificacionInterface, useNotificacion } from "../../hooks/notificaciones.hook";
+import { TipoProductoInterface } from "../../../interfaces/tipo.interface";
+import { NotificacionInterface, useNotificacion } from "../../../hooks/notificaciones.hook";
 import { InfoOutlined } from "@mui/icons-material";
 
 interface ContainerProps {

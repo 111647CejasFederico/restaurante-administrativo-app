@@ -5,14 +5,14 @@ import Tab, { tabClasses } from "@mui/joy/Tab";
 import { Button, Sheet, Stack, Table } from "@mui/joy";
 import { AccountCircle, Add, Edit, NoAccounts } from "@mui/icons-material";
 import ModalFormUsuarios from "./ModalFormUsuarios";
-import ModalDarBaja from "../../components/FeedbackComponents/ModalDarBaja";
-import { Column, Container, Row } from "../../components/GridComponents";
-import { NotificacionInterface } from "../../hooks/notificaciones.hook";
+import ModalDarBaja from "../../../components/FeedbackComponents/ModalDarBaja";
+import { Column, Container, Row } from "../../../components/GridComponents";
+import { NotificacionInterface } from "../../../hooks/notificaciones.hook";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import useSesion from "../../hooks/usuarioLogueado.hook";
-import useUrlAxio from "../../hooks/urlAxio.hook";
-import { EmpleadoInterface } from "../../interfaces/empleado.interface";
-import { TipoEstadoUsuarioInterface, TipoRolInterface } from "../../interfaces/tipo.interface";
+import useSesion from "../../../hooks/usuarioLogueado.hook";
+import useUrlAxio from "../../../hooks/urlAxio.hook";
+import { EmpleadoInterface } from "../../../interfaces/empleado.interface";
+import { TipoEstadoUsuarioInterface, TipoRolInterface } from "../../../interfaces/tipo.interface";
 
 interface ContainerProps {
   MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
