@@ -1,10 +1,29 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Login from "./pages/Login.page";
 import PageContainer from "./components/PageContainer.component";
 import useUrlAxio from "./hooks/urlAxio.hook";
-import { Route, Routes } from "react-router";
+import { Route, Routes, useNavigate } from "react-router";
 import { BrowserRouter } from "react-router-dom";
 import "./App.css";
+import useSesion from "./hooks/usuarioLogueado.hook";
+import { EmpleadoInterface } from "./interfaces/empleado.interface";
+import {} from "react-router-dom";
+
+function Redirector() {
+  const navigate = useNavigate();
+  const { getSesion } = useSesion();
+
+  useEffect(() => {
+    const sesion = getSesion();
+    if (sesion.id === 0) {
+      navigate("/Login");
+    } else {
+      navigate("/Portal/Maestros");
+    }
+  }, []);
+
+  return null;
+}
 
 function App() {
   const { setUrlAxio } = useUrlAxio();
@@ -15,8 +34,10 @@ function App() {
   return (
     <BrowserRouter basename="/">
       <Routes>
+        <Route path="/" Component={Redirector} />
         <Route path="/Login" Component={Login} />
         <Route path="/Portal/" Component={PageContainer} />
+        <Route path="/Portal/:name" Component={PageContainer} />
       </Routes>
     </BrowserRouter>
   );

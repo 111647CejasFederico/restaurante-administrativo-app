@@ -193,17 +193,15 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
       errores.estado = true;
     }
     if (
-      promocion.fechaInicio === "" ||
-      dayjs(promocion.fechaFin).format("YYYY-MM-DD") >
-        dayjs(promocion.fechaInicio).format("YYYY-MM-DD")
+      dayjs(promocion.fechaInicio).isSame(dayjs(promocion.fechaFin)) &&
+      dayjs(promocion.fechaInicio).isBefore(dayjs(promocion.fechaFin))
     ) {
       pasa = false;
       errores.fechaInicio = true;
     }
     if (
-      promocion.fechaFin === "" ||
-      dayjs(promocion.fechaInicio).format("YYYY-MM-DD") >
-        dayjs(promocion.fechaFin).format("YYYY-MM-DD")
+      dayjs(promocion.fechaInicio).isSame(dayjs(promocion.fechaFin)) &&
+      dayjs(promocion.fechaInicio).isBefore(dayjs(promocion.fechaFin))
     ) {
       pasa = false;
       errores.fechaFin = true;
@@ -356,7 +354,6 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                       <FormLabel>Nombre</FormLabel>
                       <Input
                         size="sm"
-                        required
                         placeholder="Nombre"
                         value={promocion.nombre}
                         onChange={(e) => handleChangeInput("nombre", e.target.value)}
@@ -394,7 +391,6 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                       <FormLabel>Estado</FormLabel>
                       <Select
                         size="sm"
-                        required
                         value={promocion.estado}
                         onChange={(e, value) => handleChangeInput("estado", value)}
                       >
@@ -428,15 +424,10 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                 <FormLabel>Periodo validez</FormLabel>
                 <Row xs={12}>
                   <Column xs={12} md={6} sx={{ p: "5px" }}>
-                    <FormControl
-                      disabled={modo === "consulta"}
-                      required
-                      error={promocionError.fechaInicio}
-                    >
+                    <FormControl disabled={modo === "consulta"} error={promocionError.fechaInicio}>
                       <FormLabel>Fecha inicio (MM/DD/YYYY)</FormLabel>
                       <Input
                         size="sm"
-                        required
                         placeholder="Fecha desde"
                         type="date"
                         value={promocion.fechaInicio}
@@ -451,15 +442,10 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                     </FormControl>
                   </Column>
                   <Column xs={12} md={6} sx={{ p: "5px" }}>
-                    <FormControl
-                      disabled={modo === "consulta"}
-                      required
-                      error={promocionError.fechaFin}
-                    >
+                    <FormControl disabled={modo === "consulta"} error={promocionError.fechaFin}>
                       <FormLabel>Fecha Fin (MM/DD/YYYY)</FormLabel>
                       <Input
                         size="sm"
-                        required
                         placeholder="Fecha hasta"
                         type="date"
                         value={promocion.fechaFin}
@@ -478,15 +464,10 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                 <FormLabel>Horarios validez</FormLabel>
                 <Row xs={12}>
                   <Column xs={12} md={6} sx={{ p: "5px" }}>
-                    <FormControl
-                      disabled={modo === "consulta"}
-                      required
-                      error={promocionError.horaInicio}
-                    >
+                    <FormControl disabled={modo === "consulta"} error={promocionError.horaInicio}>
                       <FormLabel>Hora inicio (HH:MM AM/PM)</FormLabel>
                       <Input
                         size="sm"
-                        required
                         placeholder="Hora desde"
                         type="time"
                         value={promocion.horaInicio}
@@ -501,15 +482,10 @@ const ModalFormPromociones: React.FC<ContainerProps> = ({
                     </FormControl>
                   </Column>
                   <Column xs={12} md={6} sx={{ p: "5px" }}>
-                    <FormControl
-                      disabled={modo === "consulta"}
-                      required
-                      error={promocionError.horaFin}
-                    >
+                    <FormControl disabled={modo === "consulta"} error={promocionError.horaFin}>
                       <FormLabel>Hora Fin (HH:MM AM/PM)</FormLabel>
                       <Input
                         size="sm"
-                        required
                         placeholder="Hora hasta"
                         type="time"
                         value={promocion.horaFin}

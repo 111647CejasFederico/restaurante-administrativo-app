@@ -2,21 +2,7 @@ import { useEffect, useState } from "react";
 import Tabs from "@mui/joy/Tabs";
 import TabList from "@mui/joy/TabList";
 import Tab, { tabClasses } from "@mui/joy/Tab";
-import {
-  Button,
-  Card,
-  CardContent,
-  Checkbox,
-  FormControl,
-  Grid,
-  Input,
-  Sheet,
-  Stack,
-  TabPanel,
-  Table,
-  Textarea,
-  Typography,
-} from "@mui/joy";
+import { Button, Stack, TabPanel, Typography } from "@mui/joy";
 import { Column, Container, Row } from "../../../components/GridComponents";
 import { NotificacionInterface } from "../../../hooks/notificaciones.hook";
 import ModalDarBaja from "../../../components/FeedbackComponents/ModalDarBaja";
@@ -32,7 +18,8 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import useSesion from "../../../hooks/usuarioLogueado.hook";
 import useUrlAxio from "../../../hooks/urlAxio.hook";
 import { Add, CheckCircle, Edit, Unpublished } from "@mui/icons-material";
-import CustomTable from "../../../components/CustomTable";
+import { BodyRow, HeadCell, CustomTable } from "../../../components/CustomTable";
+import { createExtendedInterfaceForTables } from "../../../utils/Interfaces.util";
 
 interface ContainerProps {
   MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
@@ -299,100 +286,368 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
     setTipoSeleccionado(tipo);
   };
 
-  const renderTiposProducto = (): JSX.Element[] => {
-    return tiposProductos.map((tipo) => (
-      <tr key={tipo.id}>
-        <td>{tipo.nombre}</td>
-        <td onDoubleClick={() => handleClickConsultarTipo(tipo)}>{tipo.descripcion}</td>
-        <td onDoubleClick={() => handleClickConsultarTipo(tipo)}>
-          {tipo.habilitado ? "Habilitado" : "Inhabilitado"}
-        </td>
-        <td style={{ alignContent: "space-between" }}>
-          <Stack direction="row" alignContent="space-around" alignItems="center">
-            <Button variant="plain" onClick={() => handleClickEditarTipo(tipo)} sx={{ p: "8px" }}>
-              <Edit />
-            </Button>
-            <Button variant="plain" onClick={() => handleClickDarBajaTipo(tipo)} sx={{ p: "8px" }}>
-              {tipo.habilitado ? <CheckCircle /> : <Unpublished />}
-            </Button>
-          </Stack>
-        </td>
-      </tr>
-    ));
+  const renderTableTiposProducto = (): JSX.Element => {
+    type TipoProductoTableInterface = ReturnType<
+      typeof createExtendedInterfaceForTables<TipoProductoInterface>
+    >;
+    let cabecera: HeadCell<TipoProductoTableInterface>[] = [
+      { id: "nombre", label: "Nombre", numeric: false, ordenable: true },
+      { id: "descripcion", label: "Descripcion", numeric: false, ordenable: true },
+      { id: "habilitado", label: "Habilitado", numeric: false, ordenable: true },
+      { id: "acciones", label: "Acciones", numeric: false, ordenable: false },
+    ];
+    const filas: BodyRow<TipoProductoTableInterface>[] = [];
+    tiposProductos.forEach((tipo) => {
+      const rowId = `row-${tipo.id}`;
+      filas.push({
+        id: rowId,
+        row: [
+          {
+            id: "nombre",
+            numeric: false,
+            value: tipo.nombre,
+            render: <Typography>{tipo.nombre}</Typography>,
+          },
+          {
+            id: "descripcion",
+            numeric: false,
+            value: tipo.descripcion,
+
+            render: <Typography>{tipo.descripcion}</Typography>,
+          },
+          {
+            id: "habilitado",
+            numeric: false,
+            value: tipo.habilitado,
+
+            render: <Typography>{tipo.habilitado ? "Habilitado" : "Inhabilitado"}</Typography>,
+          },
+          {
+            id: "acciones",
+            numeric: false,
+            value: null,
+            render: (
+              // <td style={{ alignContent: "space-between" }}>
+              <Stack direction="row" alignContent="space-between" alignItems="center">
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickEditarTipo(tipo)}
+                  sx={{ p: "8px" }}
+                >
+                  <Edit />
+                </Button>
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickDarBajaTipo(tipo)}
+                  sx={{ p: "8px" }}
+                >
+                  {tipo.habilitado ? <CheckCircle /> : <Unpublished />}
+                </Button>
+              </Stack>
+              // </td>
+            ),
+          },
+        ],
+        rowProps: { onDoubleClick: () => handleClickConsultarTipo(tipo) },
+      });
+    });
+
+    return (
+      <CustomTable<TipoProductoTableInterface>
+        data={filas}
+        headCells={cabecera}
+        showCheckbox={false}
+        visibleColumns={new Set(["nombre", "descripcion", "habilitado", "acciones"])}
+        labelAgregar="Agregar tipo producto"
+        handleClickRegistrar={handleClickRegistrarTipo}
+        SheetProperties={{
+          variant: "outlined",
+          sx: { boxShadow: "sm", borderRadius: "sm", p: "5px", overflowX: "auto" },
+        }}
+        TableProperties={{
+          // size: "lg",
+          sx: {
+            "& tbody p": "5px",
+            "--TableCell-selectedBackground": (theme) => theme.vars.palette.success.softBg,
+            "& thead th:nth-of-type(2)": { width: "50%" },
+            "& tr > *:nth-of-type(n+3)": { alignContent: "center", alignItems: "center" },
+          },
+        }}
+      />
+    );
   };
 
-  const renderRolesUsuario = (): JSX.Element[] => {
-    return rolesUsuario.map((rol) => (
-      <tr key={rol.id}>
-        <td>{rol.nombre}</td>
-        <td onDoubleClick={() => handleClickConsultarTipo(rol)}>{rol.descripcion}</td>
-        <td onDoubleClick={() => handleClickConsultarTipo(rol)}>
-          {rol.habilitado ? "Habilitado" : "Inhabilitado"}
-        </td>
-        <td style={{ alignContent: "space-between" }}>
-          <Stack direction="row" alignContent="space-around" alignItems="center">
-            <Button variant="plain" onClick={() => handleClickEditarTipo(rol)} sx={{ p: "8px" }}>
-              <Edit />
-            </Button>
-            <Button variant="plain" onClick={() => handleClickDarBajaTipo(rol)} sx={{ p: "8px" }}>
-              {rol.habilitado ? <CheckCircle /> : <Unpublished />}
-            </Button>
-          </Stack>
-        </td>
-      </tr>
-    ));
+  const renderTableRolesUsuario = (): JSX.Element => {
+    type TipoRolTableInterface = ReturnType<
+      typeof createExtendedInterfaceForTables<TipoRolInterface>
+    >;
+    let cabecera: HeadCell<TipoRolTableInterface>[] = [
+      { id: "nombre", label: "Nombre", numeric: false, ordenable: true },
+      { id: "descripcion", label: "Descripcion", numeric: false, ordenable: true },
+      { id: "habilitado", label: "Habilitado", numeric: false, ordenable: true },
+      { id: "acciones", label: "Acciones", numeric: false, ordenable: false },
+    ];
+    const filas: BodyRow<TipoRolTableInterface>[] = [];
+    rolesUsuario.forEach((tipo) => {
+      const rowId = `row-${tipo.id}`;
+      filas.push({
+        id: rowId,
+        row: [
+          {
+            id: "nombre",
+            numeric: false,
+            value: tipo.nombre,
+            render: <Typography>{tipo.nombre}</Typography>,
+          },
+          {
+            id: "descripcion",
+            numeric: false,
+            value: tipo.descripcion,
+
+            render: <Typography>{tipo.descripcion}</Typography>,
+          },
+          {
+            id: "habilitado",
+            numeric: false,
+            value: tipo.habilitado,
+
+            render: <Typography>{tipo.habilitado ? "Habilitado" : "Inhabilitado"}</Typography>,
+          },
+          {
+            id: "acciones",
+            numeric: false,
+            value: null,
+            render: (
+              // <td style={{ alignContent: "space-between" }}>
+              <Stack direction="row" alignContent="space-between" alignItems="center">
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickEditarTipo(tipo)}
+                  sx={{ p: "8px" }}
+                >
+                  <Edit />
+                </Button>
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickDarBajaTipo(tipo)}
+                  sx={{ p: "8px" }}
+                >
+                  {tipo.habilitado ? <CheckCircle /> : <Unpublished />}
+                </Button>
+              </Stack>
+              // </td>
+            ),
+          },
+        ],
+        rowProps: { onDoubleClick: () => handleClickConsultarTipo(tipo) },
+      });
+    });
+
+    return (
+      <CustomTable<TipoRolTableInterface>
+        data={filas}
+        headCells={cabecera}
+        showCheckbox={false}
+        visibleColumns={new Set(["nombre", "descripcion", "habilitado", "acciones"])}
+        labelAgregar="Agregar rol de usuario"
+        handleClickRegistrar={handleClickRegistrarTipo}
+        SheetProperties={{
+          variant: "outlined",
+          sx: { boxShadow: "sm", borderRadius: "sm", p: "5px", overflowX: "auto" },
+        }}
+        TableProperties={{
+          // size: "lg",
+          sx: {
+            "& tbody p": "5px",
+            "--TableCell-selectedBackground": (theme) => theme.vars.palette.success.softBg,
+            "& thead th:nth-of-type(2)": { width: "50%" },
+            "& tr > *:nth-of-type(n+3)": { alignContent: "center", alignItems: "center" },
+          },
+        }}
+      />
+    );
   };
 
-  const renderEstadosUsuario = (): JSX.Element[] => {
-    return estadosUsuario.map((estado) => (
-      <tr key={estado.id}>
-        <td>{estado.nombre}</td>
-        <td onDoubleClick={() => handleClickConsultarTipo(estado)}>{estado.descripcion}</td>
-        <td onDoubleClick={() => handleClickConsultarTipo(estado)}>
-          {estado.habilitado ? "Habilitado" : "Inhabilitado"}
-        </td>
-        <td style={{ alignContent: "space-between" }}>
-          <Stack direction="row" alignContent="space-around" alignItems="center">
-            <Button variant="plain" onClick={() => handleClickEditarTipo(estado)} sx={{ p: "8px" }}>
-              <Edit />
-            </Button>
-            <Button
-              variant="plain"
-              onClick={() => handleClickDarBajaTipo(estado)}
-              sx={{ p: "8px" }}
-            >
-              {estado.habilitado ? <CheckCircle /> : <Unpublished />}
-            </Button>
-          </Stack>
-        </td>
-      </tr>
-    ));
+  const renderTableEstadoUsuario = (): JSX.Element => {
+    type TipoEstadoUsuarioTableInterface = ReturnType<
+      typeof createExtendedInterfaceForTables<TipoEstadoUsuarioInterface>
+    >;
+    let cabecera: HeadCell<TipoEstadoUsuarioTableInterface>[] = [
+      { id: "nombre", label: "Nombre", numeric: false, ordenable: true },
+      { id: "descripcion", label: "Descripcion", numeric: false, ordenable: true },
+      { id: "habilitado", label: "Habilitado", numeric: false, ordenable: true },
+      { id: "acciones", label: "Acciones", numeric: false, ordenable: false },
+    ];
+    const filas: BodyRow<TipoEstadoUsuarioTableInterface>[] = [];
+    estadosUsuario.forEach((tipo) => {
+      const rowId = `row-${tipo.id}`;
+      filas.push({
+        id: rowId,
+        row: [
+          {
+            id: "nombre",
+            numeric: false,
+            value: tipo.nombre,
+            render: <Typography>{tipo.nombre}</Typography>,
+          },
+          {
+            id: "descripcion",
+            numeric: false,
+            value: tipo.descripcion,
+
+            render: <Typography>{tipo.descripcion}</Typography>,
+          },
+          {
+            id: "habilitado",
+            numeric: false,
+            value: tipo.habilitado,
+
+            render: <Typography>{tipo.habilitado ? "Habilitado" : "Inhabilitado"}</Typography>,
+          },
+          {
+            id: "acciones",
+            numeric: false,
+            value: null,
+            render: (
+              // <td style={{ alignContent: "space-between" }}>
+              <Stack direction="row" alignContent="space-between" alignItems="center">
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickEditarTipo(tipo)}
+                  sx={{ p: "8px" }}
+                >
+                  <Edit />
+                </Button>
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickDarBajaTipo(tipo)}
+                  sx={{ p: "8px" }}
+                >
+                  {tipo.habilitado ? <CheckCircle /> : <Unpublished />}
+                </Button>
+              </Stack>
+              // </td>
+            ),
+          },
+        ],
+        rowProps: { onDoubleClick: () => handleClickConsultarTipo(tipo) },
+      });
+    });
+
+    return (
+      <CustomTable<TipoEstadoUsuarioTableInterface>
+        data={filas}
+        headCells={cabecera}
+        showCheckbox={false}
+        visibleColumns={new Set(["nombre", "descripcion", "habilitado", "acciones"])}
+        labelAgregar="Agregar rol de usuario"
+        handleClickRegistrar={handleClickRegistrarTipo}
+        SheetProperties={{
+          variant: "outlined",
+          sx: { boxShadow: "sm", borderRadius: "sm", p: "5px", overflowX: "auto" },
+        }}
+        TableProperties={{
+          // size: "lg",
+          sx: {
+            "& tbody p": "5px",
+            "--TableCell-selectedBackground": (theme) => theme.vars.palette.success.softBg,
+            "& thead th:nth-of-type(2)": { width: "50%" },
+            "& tr > *:nth-of-type(n+3)": { alignContent: "center", alignItems: "center" },
+          },
+        }}
+      />
+    );
   };
 
-  const renderEstadosPromocion = (): JSX.Element[] => {
-    return estadosPromocion.map((estado) => (
-      <tr key={estado.id}>
-        <td>{estado.nombre}</td>
-        <td onDoubleClick={() => handleClickConsultarTipo(estado)}>{estado.descripcion}</td>
-        <td onDoubleClick={() => handleClickConsultarTipo(estado)}>
-          {estado.habilitado ? "Habilitado" : "Inhabilitado"}
-        </td>
-        <td style={{ alignContent: "space-between" }}>
-          <Stack direction="row" alignContent="space-around" alignItems="center">
-            <Button variant="plain" onClick={() => handleClickEditarTipo(estado)} sx={{ p: "8px" }}>
-              <Edit />
-            </Button>
-            <Button
-              variant="plain"
-              onClick={() => handleClickDarBajaTipo(estado)}
-              sx={{ p: "8px" }}
-            >
-              {estado.habilitado ? <CheckCircle /> : <Unpublished />}
-            </Button>
-          </Stack>
-        </td>
-      </tr>
-    ));
+  const renderTableEstadoPromocion = (): JSX.Element => {
+    type TipoEstadoPromocionTableInterface = ReturnType<
+      typeof createExtendedInterfaceForTables<TipoEstadoPromocionInterface>
+    >;
+    let cabecera: HeadCell<TipoEstadoPromocionTableInterface>[] = [
+      { id: "nombre", label: "Nombre", numeric: false, ordenable: true },
+      { id: "descripcion", label: "Descripcion", numeric: false, ordenable: true },
+      { id: "habilitado", label: "Habilitado", numeric: false, ordenable: true },
+      { id: "acciones", label: "Acciones", numeric: false, ordenable: false },
+    ];
+    const filas: BodyRow<TipoEstadoPromocionTableInterface>[] = [];
+    estadosPromocion.forEach((tipo) => {
+      const rowId = `row-${tipo.id}`;
+      filas.push({
+        id: rowId,
+        row: [
+          {
+            id: "nombre",
+            numeric: false,
+            value: tipo.nombre,
+            render: <Typography>{tipo.nombre}</Typography>,
+          },
+          {
+            id: "descripcion",
+            numeric: false,
+            value: tipo.descripcion,
+
+            render: <Typography>{tipo.descripcion}</Typography>,
+          },
+          {
+            id: "habilitado",
+            numeric: false,
+            value: tipo.habilitado,
+
+            render: <Typography>{tipo.habilitado ? "Habilitado" : "Inhabilitado"}</Typography>,
+          },
+          {
+            id: "acciones",
+            numeric: false,
+            value: null,
+            render: (
+              // <td style={{ alignContent: "space-between" }}>
+              <Stack direction="row" alignContent="space-between" alignItems="center">
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickEditarTipo(tipo)}
+                  sx={{ p: "8px" }}
+                >
+                  <Edit />
+                </Button>
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickDarBajaTipo(tipo)}
+                  sx={{ p: "8px" }}
+                >
+                  {tipo.habilitado ? <CheckCircle /> : <Unpublished />}
+                </Button>
+              </Stack>
+              // </td>
+            ),
+          },
+        ],
+        rowProps: { onDoubleClick: () => handleClickConsultarTipo(tipo) },
+      });
+    });
+
+    return (
+      <CustomTable<TipoEstadoPromocionTableInterface>
+        data={filas}
+        headCells={cabecera}
+        showCheckbox={false}
+        visibleColumns={new Set(["nombre", "descripcion", "habilitado", "acciones"])}
+        labelAgregar="Agregar rol de usuario"
+        handleClickRegistrar={handleClickRegistrarTipo}
+        SheetProperties={{
+          variant: "outlined",
+          sx: { boxShadow: "sm", borderRadius: "sm", p: "5px", overflowX: "auto" },
+        }}
+        TableProperties={{
+          // size: "lg",
+          sx: {
+            "& tbody p": "5px",
+            "--TableCell-selectedBackground": (theme) => theme.vars.palette.success.softBg,
+            "& thead th:nth-of-type(2)": { width: "50%" },
+            "& tr > *:nth-of-type(n+3)": { alignContent: "center", alignItems: "center" },
+          },
+        }}
+      />
+    );
   };
 
   return (
@@ -425,66 +680,7 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
           <Row xs={12}>
             <Column xs={12}>
               <Row justifyContent="space-evenly" alignItems="center" xs={12}>
-                <Sheet
-                  variant="outlined"
-                  sx={{ width: "100%", boxShadow: "sm", borderRadius: "sm", p: "5px" }}
-                >
-                  {/* <Table
-                    size="lg"
-                    sx={{
-                      "--TableCell-selectedBackground": (theme) =>
-                        theme.vars.palette.success.softBg,
-                      "& thead th:nth-of-type(2)": { width: "40px" },
-                      "& tr > *:nth-of-type(n+3)": { alignContent: "center" },
-                    }}
-                  >
-                    <thead>
-                      <tr>
-                        <th>Nombre</th>
-                        <th style={{ width: "50%" }}>Descripcion</th>
-                        <th>Habilitado</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <Button onClick={handleClickRegistrarTipo}>
-                                <Add /> Registrar nuevo {getlabel()}
-                              </Button>
-                            </Column>
-                          </Row>
-                        </td>
-                      </tr>
-                      {renderTiposProducto()}
-                    </tbody>
-                  </Table> */}
-                  <CustomTable<TipoProductoInterface>
-                    data={tiposProductos}
-                    headCells={[
-                      { disablePadding: false, id: "nombre", label: "Nombre", numeric: false },
-                      {
-                        disablePadding: false,
-                        id: "descripcion",
-                        label: "Descripcion",
-                        numeric: false,
-                      },
-                      {
-                        disablePadding: false,
-                        id: "habilitado",
-                        label: "Habilitado",
-                        numeric: false,
-                      },
-                    ]}
-                    showCheckbox={false}
-                    visibleColumns={new Set(["nombre", "descripcion", "habilitado"])}
-                    onSelectedChange={console.log}
-                    labelAgregar="Agregar tipo producto"
-                    handleClickRegistrar={handleClickRegistrarTipo}
-                  />
-                </Sheet>
+                {renderTableTiposProducto()}
               </Row>
             </Column>
           </Row>
@@ -495,43 +691,7 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
           <Row xs={12}>
             <Column xs={12}>
               <Row justifyContent="space-evenly" alignItems="center" xs={12}>
-                <Sheet
-                  variant="outlined"
-                  sx={{ width: "100%", boxShadow: "sm", borderRadius: "sm", p: "5px" }}
-                >
-                  <Table
-                    size="lg"
-                    sx={{
-                      "--TableCell-selectedBackground": (theme) =>
-                        theme.vars.palette.success.softBg,
-                      "& thead th:nth-of-type(2)": { width: "40px" },
-                      "& tr > *:nth-of-type(n+3)": { alignContent: "center" },
-                    }}
-                  >
-                    <thead>
-                      <tr>
-                        <th>Nombre</th>
-                        <th style={{ width: "50%" }}>Descripcion</th>
-                        <th>Habilitado</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <Button onClick={handleClickRegistrarTipo}>
-                                <Add /> Registrar nuevo {getlabel()}
-                              </Button>
-                            </Column>
-                          </Row>
-                        </td>
-                      </tr>
-                      {renderRolesUsuario()}
-                    </tbody>
-                  </Table>
-                </Sheet>
+                {renderTableRolesUsuario()}
               </Row>
             </Column>
           </Row>
@@ -542,43 +702,7 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
           <Row xs={12}>
             <Column xs={12}>
               <Row justifyContent="space-evenly" alignItems="center" xs={12}>
-                <Sheet
-                  variant="outlined"
-                  sx={{ width: "100%", boxShadow: "sm", borderRadius: "sm", p: "5px" }}
-                >
-                  <Table
-                    size="lg"
-                    sx={{
-                      "--TableCell-selectedBackground": (theme) =>
-                        theme.vars.palette.success.softBg,
-                      "& thead th:nth-of-type(2)": { width: "40px" },
-                      "& tr > *:nth-of-type(n+3)": { alignContent: "center" },
-                    }}
-                  >
-                    <thead>
-                      <tr>
-                        <th>Nombre</th>
-                        <th style={{ width: "50%" }}>Descripcion</th>
-                        <th>Habilitado</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <Button onClick={handleClickRegistrarTipo}>
-                                <Add /> Registrar nuevo {getlabel()}
-                              </Button>
-                            </Column>
-                          </Row>
-                        </td>
-                      </tr>
-                      {renderEstadosUsuario()}
-                    </tbody>
-                  </Table>
-                </Sheet>
+                {renderTableEstadoUsuario()}
               </Row>
             </Column>
           </Row>
@@ -589,43 +713,7 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
           <Row xs={12}>
             <Column xs={12}>
               <Row justifyContent="space-evenly" alignItems="center" xs={12}>
-                <Sheet
-                  variant="outlined"
-                  sx={{ width: "100%", boxShadow: "sm", borderRadius: "sm", p: "5px" }}
-                >
-                  <Table
-                    size="lg"
-                    sx={{
-                      "--TableCell-selectedBackground": (theme) =>
-                        theme.vars.palette.success.softBg,
-                      "& thead th:nth-of-type(2)": { width: "40px" },
-                      "& tr > *:nth-of-type(n+3)": { alignContent: "center" },
-                    }}
-                  >
-                    <thead>
-                      <tr>
-                        <th>Nombre</th>
-                        <th style={{ width: "50%" }}>Descripcion</th>
-                        <th>Habilitado</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td colSpan={4} style={{ paddingInline: 0, paddingBlock: "5px" }}>
-                          <Row xs={12}>
-                            <Column xs={12}>
-                              <Button onClick={handleClickRegistrarTipo}>
-                                <Add /> Registrar nuevo {getlabel()}
-                              </Button>
-                            </Column>
-                          </Row>
-                        </td>
-                      </tr>
-                      {renderEstadosPromocion()}
-                    </tbody>
-                  </Table>
-                </Sheet>
+                {renderTableEstadoPromocion()}
               </Row>
             </Column>
           </Row>

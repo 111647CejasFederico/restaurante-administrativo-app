@@ -18,7 +18,7 @@ export interface PromocionInterface {
   validoSabado: boolean;
   validoDomingo: boolean;
   estado: number;
-  Estado?: TipoEstadoPromocionInterface;
+  EstadoPromocion?: TipoEstadoPromocionInterface;
   DetallesPromocion?: DetallePromocionInterface[];
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Tabs from "@mui/joy/Tabs";
 import TabList from "@mui/joy/TabList";
 import Tab, { tabClasses } from "@mui/joy/Tab";
-import { Button, Stack, Table } from "@mui/joy";
+import { Button, Stack, Table, Typography } from "@mui/joy";
 import { Add, Edit, Fastfood, NoFood, NoMeals } from "@mui/icons-material";
 import { Column, Container, Row } from "../../../components/GridComponents";
 import ModalFormPromociones from "./ModalFormPromociones";
@@ -13,6 +13,8 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import useSesion from "../../../hooks/usuarioLogueado.hook";
 import useUrlAxio from "../../../hooks/urlAxio.hook";
 import dayjs from "dayjs";
+import createExtendedInterfaceForTables from "../../../utils/Interfaces.util";
+import { BodyRow, CustomTable, HeadCell } from "../../../components/CustomTable";
 
 interface ContainerProps {
   MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
@@ -144,7 +146,7 @@ const TabPromociones: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
     });
   };
 
-  const handleClickConsultarUsuario = (promocion: PromocionInterface) => {
+  const handleClickConsultarPromocion = (promocion: PromocionInterface) => {
     setOpenModalPromocion(true);
     setModoModalPromocion("consulta");
     setPromocionSeleccionada(promocion);
@@ -171,45 +173,166 @@ const TabPromociones: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
     return `${formattedHour}:${formattedMinute} ${ampm}`;
   };
 
-  const renderPromociones = (): JSX.Element[] => {
-    return promociones.map((promocion) => (
-      <tr>
-        <td>{promocion.nombre}</td>
-        <td onDoubleClick={() => handleClickConsultarUsuario(promocion)}>
-          {`${dayjs(promocion.fechaInicio).format("MM/DD/YYYY")} - ${dayjs(
-            promocion.fechaFin
-          ).format("MM/DD/YYYY")}`}
-        </td>
-        <td onDoubleClick={() => handleClickConsultarUsuario(promocion)}>
-          {`${formatearHora(promocion.horaInicio)} - ${formatearHora(promocion.horaFin)}`}
-        </td>
-        <td onDoubleClick={() => handleClickConsultarUsuario(promocion)}>
-          {promocion.Estado?.nombre}
-        </td>
-        <td style={{ alignContent: "space-between" }}>
-          <Stack direction="row" alignContent="space-around" alignItems="center">
-            <Button
-              variant="plain"
-              onClick={() => handleClickEditarPromocion(promocion)}
-              sx={{ p: "8px" }}
-            >
-              <Edit />
-            </Button>
-            <Button
-              variant="plain"
-              onClick={() => handleClickDarBajaPromocion(promocion)}
-              sx={{ p: "8px" }}
-            >
-              {promocion.estado !== 2 ? <Fastfood /> : <NoFood />}
-            </Button>
-          </Stack>
-        </td>
-      </tr>
-    ));
+  const renderTableProductos = (): JSX.Element => {
+    type PromocionTableInterface = ReturnType<
+      typeof createExtendedInterfaceForTables<PromocionInterface>
+    >;
+    let cabecera: HeadCell<PromocionTableInterface>[] = [
+      { id: "nombre", label: "Nombre", numeric: false, ordenable: true },
+      { id: "fechaInicio", label: "Fecha inicio", numeric: false, ordenable: true },
+      { id: "fechaFin", label: "Fecha fin", numeric: false, ordenable: true },
+      { id: "horaInicio", label: "Hora inicio", numeric: false, ordenable: true },
+      { id: "horaFin", label: "Hora fin", numeric: false, ordenable: true },
+      { id: "estado", label: "Estado", numeric: false, ordenable: true },
+      { id: "acciones", label: "Acciones", numeric: false, ordenable: false },
+    ];
+    const filas: BodyRow<PromocionTableInterface>[] = [];
+    promociones.forEach((promocion) => {
+      const rowId = `row-${promocion.id}`;
+      filas.push({
+        id: rowId,
+        row: [
+          {
+            id: "nombre",
+            numeric: false,
+            value: promocion.nombre,
+            render: <Typography>{promocion.nombre}</Typography>,
+          },
+          {
+            id: "fechaInicio",
+            numeric: false,
+            value: promocion.fechaInicio,
+            render: <Typography>{dayjs(promocion.fechaInicio).format("MM/DD/YYYY")}</Typography>,
+          },
+          {
+            id: "fechaFin",
+            numeric: true,
+            value: promocion.fechaFin,
+            render: <Typography>{dayjs(promocion.fechaFin).format("MM/DD/YYYY")}</Typography>,
+          },
+          {
+            id: "horaInicio",
+            numeric: false,
+            value: promocion.horaInicio,
+            render: <Typography>{formatearHora(promocion.horaInicio)}</Typography>,
+          },
+          {
+            id: "horaFin",
+            numeric: true,
+            value: promocion.horaFin,
+            render: <Typography>{formatearHora(promocion.horaFin)}</Typography>,
+          },
+          {
+            id: "estado",
+            numeric: false,
+            value: promocion.EstadoPromocion?.nombre || "",
+            render: <Typography>{promocion.EstadoPromocion?.nombre}</Typography>,
+          },
+          {
+            id: "acciones",
+            numeric: false,
+            value: null,
+            render: (
+              <Stack direction="row" alignContent="space-around" alignItems="center">
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickEditarPromocion(promocion)}
+                  sx={{ p: "8px" }}
+                >
+                  <Edit />
+                </Button>
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickDarBajaPromocion(promocion)}
+                  sx={{ p: "8px" }}
+                >
+                  {promocion.estado !== 2 ? <Fastfood /> : <NoFood />}
+                </Button>
+              </Stack>
+            ),
+          },
+        ],
+        rowProps: { onDoubleClick: () => handleClickConsultarPromocion(promocion) },
+      });
+    });
+
+    return (
+      <CustomTable<PromocionTableInterface>
+        data={filas}
+        headCells={cabecera}
+        showCheckbox={false}
+        visibleColumns={
+          new Set([
+            "nombre",
+            "fechaInicio",
+            "fechaFin",
+            "horaInicio",
+            "horaFin",
+            "estado",
+            "acciones",
+          ])
+        }
+        labelAgregar="Agregar producto"
+        handleClickRegistrar={handleClickRegistrarPromocion}
+        SheetProperties={{
+          variant: "outlined",
+          sx: {
+            "--TableCell-height": "20px",
+            // the number is the amount of the header rows.
+            "--TableHeader-height": "calc(1 * var(--TableCell-height))",
+            "--Table-firstColumnWidth": "80px",
+            "--Table-lastColumnWidth": "90px",
+            // background needs to have transparency to show the scrolling shadows
+            "--TableRow-hoverBackground": "rgba(0 0 0 / 0.08)",
+            overflow: "auto",
+            background: (
+              theme
+            ) => `linear-gradient(to right, ${theme.vars.palette.background.surface} 30%, rgba(255, 255, 255, 0)),
+            linear-gradient(to right, rgba(255, 255, 255, 0), ${theme.vars.palette.background.surface} 70%) 0 100%,
+            radial-gradient(
+              farthest-side at 0 50%,
+              rgba(0, 0, 0, 0.12),
+              rgba(0, 0, 0, 0)
+            ),
+            radial-gradient(
+                farthest-side at 100% 50%,
+                rgba(0, 0, 0, 0.12),
+                rgba(0, 0, 0, 0)
+              )
+              0 100%`,
+            backgroundSize:
+              "40px calc(100% - var(--TableCell-height)), 40px calc(100% - var(--TableCell-height)), 14px calc(100% - var(--TableCell-height)), 14px calc(100% - var(--TableCell-height))",
+            backgroundRepeat: "no-repeat",
+            backgroundAttachment: "local, local, scroll, scroll",
+            backgroundPosition:
+              "var(--Table-firstColumnWidth) var(--TableCell-height), calc(100% - var(--Table-lastColumnWidth)) var(--TableCell-height), var(--Table-firstColumnWidth) var(--TableCell-height), calc(100% - var(--Table-lastColumnWidth)) var(--TableCell-height)",
+            backgroundColor: "background.surface",
+          },
+        }}
+        TableProperties={{
+          // size: "lg",
+          hoverRow: true,
+          sx: {
+            "& tr > *:first-of-type": {
+              position: "sticky",
+              left: 0,
+              boxShadow: "1px 0 var(--TableCell-borderColor)",
+              bgcolor: "background.surface",
+            },
+            "& tr > *:last-child": {
+              position: "sticky",
+              right: 0,
+              bgcolor: "var(--TableCell-headBackground)",
+            },
+          },
+        }}
+      />
+    );
   };
+
   return (
     <Container direction="column" justifyContent="space-evenly" alignItems="center">
-      <Row
+      {/* <Row
         // variant="outlined"
         sx={{
           "--TableCell-height": "20px",
@@ -245,8 +368,6 @@ const TabPromociones: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
         }}
       >
         <Table
-          aria-label="table"
-          size="lg"
           hoverRow
           sx={{
             "& tr > *:first-of-type": {
@@ -286,7 +407,8 @@ const TabPromociones: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
             {renderPromociones()}
           </tbody>
         </Table>
-      </Row>
+      </Row> */}
+      {renderTableProductos()}
       <ModalFormPromociones
         open={openModalPromocion}
         setOpen={setOpenModalPromocion}

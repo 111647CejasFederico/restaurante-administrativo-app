@@ -70,7 +70,7 @@ const ModalFormProductos: React.FC<ContainerProps> = ({
     try {
       const response = await axios.get(`${getUrlAxio()}Tipoproducto`, config);
 
-      let tiposProductosResponse: ProductoInterface[] = [];
+      let tiposProductosResponse: TipoProductoInterface[] = [];
       response.data.forEach((tipos: any) => {
         tiposProductosResponse.push({ ...tipos });
       });

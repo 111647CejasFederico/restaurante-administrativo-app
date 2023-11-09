@@ -1,126 +1,172 @@
-import { useState, useEffect, CSSProperties } from "react";
+import { useState, useEffect, CSSProperties, DetailedHTMLProps } from "react";
 import Box from "@mui/joy/Box";
-import Table from "@mui/joy/Table";
+import Table, { TableProps } from "@mui/joy/Table";
 import Typography from "@mui/joy/Typography";
-import Sheet from "@mui/joy/Sheet";
+import Sheet, { SheetProps } from "@mui/joy/Sheet";
 import Checkbox from "@mui/joy/Checkbox";
 import FormControl from "@mui/joy/FormControl";
 import FormLabel from "@mui/joy/FormLabel";
 import IconButton from "@mui/joy/IconButton";
-import Link from "@mui/joy/Link";
-import Tooltip from "@mui/joy/Tooltip";
 import Select from "@mui/joy/Select";
 import Option from "@mui/joy/Option";
-import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { visuallyHidden } from "@mui/utils";
-import { Column, Row } from "./GridComponents";
-import { Button } from "@mui/joy";
-import { Add } from "@mui/icons-material";
+import { Column, Container, Row } from "./GridComponents";
+import { Button, Input } from "@mui/joy";
+import { Add, Search } from "@mui/icons-material";
+import dayjs from "dayjs";
 
-interface HeadCell {
-  disablePadding: boolean;
-  //@ts-ignore
+export interface HeadCell<T> {
   id: keyof T;
   label: string;
   numeric: boolean;
+  ordenable: boolean;
 }
 
-interface TableProps<T> {
-  data: T[];
-  headCells: HeadCell[];
-  showCheckbox: boolean;
-  visibleColumns: Set<keyof T>;
-  onSelectedChange: (selected: string[]) => void;
+interface BodyCell<T> {
+  id: keyof T;
+  numeric: boolean;
+  value: string | boolean | number | null;
+  render: JSX.Element;
+}
+
+export interface BodyRow<T> {
+  rowProps: DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>;
+  row: BodyCell<T>[];
+  id: string; // Agregar un identificador único para cada fila
+}
+
+interface ContainerProps<T> {
+  data: BodyRow<T>[];
+  headCells: HeadCell<T>[];
   labelAgregar: string;
   handleClickRegistrar: () => void;
+  showCheckbox: boolean;
+  visibleColumns: Set<keyof T>;
+  SheetProperties: SheetProps;
+  TableProperties: TableProps;
+  onSelectedChange?: (selected: string[]) => void;
 }
 
 type Order = "asc" | "desc";
 
-function CustomTable<T>({
+export function CustomTable<T>({
   data,
   headCells,
-  showCheckbox,
-  visibleColumns,
-  onSelectedChange,
   labelAgregar,
   handleClickRegistrar,
-}: TableProps<T>) {
+  showCheckbox,
+  visibleColumns,
+  SheetProperties,
+  TableProperties,
+  onSelectedChange,
+}: ContainerProps<T>) {
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof T>();
   const [selected, setSelected] = useState<readonly string[]>([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rows, setRows] = useState<BodyRow<T>[]>([]);
+  const [search, setSearch] = useState<string>("");
+  const [searchBy, setSearchBy] = useState<string>(String(headCells[0].id));
 
   const handleRequestSort = (property: keyof T) => {
-    const isAsc = orderBy === property && order === "asc";
-    const newOrder = isAsc ? "desc" : "asc";
-    setOrder(newOrder);
-    setOrderBy(property);
+    if (headCells.some((cabecera) => cabecera.id === property && cabecera.ordenable)) {
+      const isAsc = orderBy === property && order === "asc";
+      const newOrder = isAsc ? "desc" : "asc";
+      setOrder(newOrder);
+      setOrderBy(property);
+    }
+  };
+  const compareTime = (timeA: string, timeB: string) => {
+    const [hoursA, minutesA] = timeA.split(":").map(Number);
+    const [hoursB, minutesB] = timeB.split(":").map(Number);
+
+    if (hoursA !== hoursB) {
+      return hoursA - hoursB;
+    }
+
+    return minutesA - minutesB;
   };
 
-  const sortData = (property: keyof T, newOrder: Order) => {
-    const sortedData = data.sort((a, b) => {
-      const aValue = a[property];
-      const bValue = b[property];
+  const sortData = (property: keyof T, newOrder: Order, filteredRows: BodyRow<T>[]) => {
+    const sortedData = filteredRows.slice().sort((a, b) => {
+      const aValue = a.row.find((columna) => columna.id === property)?.value;
+      const bValue = b.row.find((columna) => columna.id === property)?.value;
 
-      if ((aValue === null || aValue === undefined) && (bValue === null || bValue === undefined)) {
-        return 0;
-      }
-
-      if (aValue === null || aValue === undefined) {
+      if (aValue == null || aValue == undefined) {
         return newOrder === "asc" ? 1 : -1;
       }
 
-      if (bValue === null || bValue === undefined) {
+      if (bValue == null || bValue == undefined) {
         return newOrder === "asc" ? -1 : 1;
       }
+      //@ts-ignore
+      const dateA = dayjs(aValue);
+      //@ts-ignore
+      const dateB = dayjs(bValue);
 
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        return newOrder === "asc" ? aValue - bValue : bValue - aValue;
+      if (dateA.isValid() && dateB.isValid()) {
+        return newOrder === "asc" ? dateA.diff(dateB) : dateB.diff(dateA);
       }
 
-      if (typeof aValue === "boolean" && typeof bValue === "boolean") {
-        return aValue === bValue
-          ? 0
-          : aValue
-          ? newOrder === "asc"
-            ? -1
-            : 1
-          : newOrder === "asc"
-          ? 1
-          : -1;
+      const timeRegex = /^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/;
+
+      //@ts-ignore
+      if (timeRegex.test(aValue) && timeRegex.test(bValue)) {
+        //@ts-ignore
+        return newOrder === "asc" ? compareTime(aValue, bValue) : compareTime(bValue, aValue);
       }
 
-      return newOrder === "asc"
-        ? aValue.toString().localeCompare(bValue.toString())
-        : bValue.toString().localeCompare(aValue.toString());
+      const numA = Number(aValue);
+      const numB = Number(bValue);
+
+      if (isNaN(numA) && isNaN(numB)) {
+        return newOrder === "asc"
+          ? String(aValue).localeCompare(String(bValue))
+          : String(bValue).localeCompare(String(aValue));
+      } else {
+        return newOrder === "asc" ? numA - numB : numB - numA;
+      }
     });
 
     return sortedData;
   };
 
+  const filterRows = () => {
+    let filteredRows: BodyRow<T>[] = data;
+    if (searchBy) {
+      if (search !== "") {
+        filteredRows = filteredRows.filter((row) =>
+          String(row.row.find((columna) => columna.id === searchBy)?.value)
+            .toLowerCase()
+            .includes(search.toLowerCase())
+        );
+      }
+    }
+    if (orderBy) sortData(orderBy, order, filteredRows);
+    setRows(orderBy ? sortData(orderBy, order, filteredRows) : filteredRows);
+  };
+
   const handleSelectAllClick = (checked: boolean) => {
     if (checked) {
-      //@ts-ignore
-      const newSelected = data.map((n) => n.name);
+      const newSelected = data.map((n) => n.id);
       setSelected(newSelected);
-      onSelectedChange(newSelected);
+      // onSelectedChange(newSelected);
       return;
     }
     setSelected([]);
-    onSelectedChange([]);
+    // onSelectedChange([]);
   };
 
-  const handleClick = (name: string) => {
-    const selectedIndex = selected.indexOf(name);
+  const handleClick = (id: string) => {
+    const selectedIndex = selected.indexOf(id);
     let newSelected: string[] = [];
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
+      newSelected = newSelected.concat(selected, id);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -133,7 +179,7 @@ function CustomTable<T>({
     }
 
     setSelected(newSelected);
-    onSelectedChange(newSelected);
+    // onSelectedChange(newSelected);
   };
 
   const handleChangePage = (newPage: number) => {
@@ -141,7 +187,7 @@ function CustomTable<T>({
   };
 
   const handleChangeRowsPerPage = (newValue: number | null) => {
-    setRowsPerPage(parseInt(newValue!.toString(), 10));
+    setRowsPerPage(newValue ? parseInt(newValue.toString(), 10) : 10);
     setPage(0);
   };
 
@@ -152,14 +198,14 @@ function CustomTable<T>({
     return rowsPerPage === -1 ? data.length : Math.min(data.length, (page + 1) * rowsPerPage);
   };
 
-  const isSelected = (name: string) => selected.indexOf(name) !== -1;
+  const isSelected = (id: string) => selected.indexOf(id) !== -1;
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - data.length) : 0;
 
   const renderHeader = () => {
     return (
       <thead>
-        <tr>
+        <tr key={page}>
           {showCheckbox && (
             <th>
               <Checkbox
@@ -183,21 +229,26 @@ function CustomTable<T>({
             if (isVisible) {
               return (
                 <th
-                  //@ts-ignore
-                  // key={headCell.id}
-                  aria-sort={active ? (order === "asc" ? "ascending" : "descending") : "none"}
+                  aria-sort={
+                    headCell.ordenable && active
+                      ? order === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : "none"
+                  }
                 >
                   <Button
+                    disabled={!headCell.ordenable}
                     variant="plain"
                     //@ts-ignore
                     onClick={() => handleRequestSort(headCell.id)}
                     startDecorator={
-                      headCell.numeric ? (
+                      headCell.ordenable && headCell.numeric ? (
                         <ArrowDownwardIcon sx={{ opacity: active ? 1 : 0 }} />
                       ) : null
                     }
                     endDecorator={
-                      !headCell.numeric ? (
+                      headCell.ordenable && !headCell.numeric ? (
                         <ArrowDownwardIcon sx={{ opacity: active ? 1 : 0 }} />
                       ) : null
                     }
@@ -232,10 +283,16 @@ function CustomTable<T>({
     );
   };
 
+  useEffect(() => {
+    if (data.length > 0) {
+      filterRows();
+    }
+  }, [data, search, searchBy, order, orderBy]);
+
   const renderBody = () => {
     return (
       <tbody>
-        <tr>
+        <tr key={"add-item-row"}>
           <td colSpan={headCells.length} style={{ paddingInline: 0, paddingBlock: "5px" }}>
             <Row xs={12}>
               <Column xs={12}>
@@ -246,32 +303,23 @@ function CustomTable<T>({
             </Row>
           </td>
         </tr>
-        {(orderBy ? sortData(orderBy, order) : data)
-          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-          .map((row, index) => {
-            //@ts-ignore
-            const isItemSelected = isSelected(row.name);
-            const labelId = `enhanced-table-checkbox-${index}`;
+        {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+          const isItemSelected = isSelected(row.id);
 
-            return (
-              <tr
-                //@ts-ignore
-                // onClick={() => handleClick(row.name)}
-                role="checkbox"
-                aria-checked={isItemSelected}
-                tabIndex={-1}
-                //@ts-ignore
-                key={row.name}
-                style={
-                  isItemSelected
-                    ? ({
-                        "--TableCell-dataBackground": "var(--TableCell-selectedBackground)",
-                        "--TableCell-headBackground": "var(--TableCell-selectedBackground)",
-                      } as CSSProperties)
-                    : {}
-                }
-              >
-                {showCheckbox && (
+          return (
+            <tr
+              {...row.rowProps}
+              key={row.id} // Agrega una clave única aquí
+              style={
+                isItemSelected
+                  ? ({
+                      "--TableCell-dataBackground": "var(--TableCell-selectedBackground)",
+                      "--TableCell-headBackground": "var(--TableCell-selectedBackground)",
+                    } as CSSProperties)
+                  : {}
+              }
+            >
+              {/* {showCheckbox && (
                   <th scope="row">
                     <Checkbox
                       checked={isItemSelected}
@@ -283,26 +331,30 @@ function CustomTable<T>({
                       sx={{ verticalAlign: "top" }}
                     />
                   </th>
-                )}
-                {headCells.map((headCell) => {
-                  //@ts-ignore
-                  const isVisible = visibleColumns.has(headCell.id);
+                )} */}
+              {headCells.map((headCell) => {
+                //@ts-ignore
+                const isVisible = visibleColumns.has(headCell.id);
 
-                  if (isVisible) {
-                    //@ts-ignore
-                    return <td key={headCell.id}>{row[headCell.id]}</td>;
-                  } else {
-                    return null;
-                  }
-                })}
-              </tr>
-            );
-          })}
+                if (isVisible) {
+                  //@ts-ignore
+                  return (
+                    <td style={{ height: "40px" }}>
+                      {row.row.find((columna) => columna.id === headCell.id)?.render}
+                    </td>
+                  );
+                } else {
+                  return null;
+                }
+              })}
+            </tr>
+          );
+        })}
         {emptyRows > 0 && (
           <tr
             style={
               {
-                height: `calc(${emptyRows} * 40px)`,
+                height: `calc(${emptyRows} * 48.7px)`,
                 "--TableRow-hoverBackground": "transparent",
               } as CSSProperties
             }
@@ -330,9 +382,9 @@ function CustomTable<T>({
               <FormControl orientation="horizontal" size="sm">
                 <FormLabel>Filas por página:</FormLabel>
                 <Select onChange={(e, value) => handleChangeRowsPerPage(value)} value={rowsPerPage}>
-                  <Option value={5}>5</Option>
                   <Option value={10}>10</Option>
-                  <Option value={25}>25</Option>
+                  <Option value={20}>20</Option>
+                  <Option value={30}>30</Option>
                 </Select>
               </FormControl>
               <Typography textAlign="center" sx={{ minWidth: 80 }}>
@@ -373,9 +425,55 @@ function CustomTable<T>({
     );
   };
 
+  useEffect(() => {
+    filterRows();
+  }, [search, searchBy]);
+
   return (
-    <Sheet>
-      <Table>
+    <Sheet {...SheetProperties}>
+      <Container display="flex">
+        <Row xs={12} alignContent="flex-end" alignItems="flex-end">
+          <Column xs={12} sm={6} md={3} lg={2} m={{ xs: 0, md: 1 }}>
+            <FormControl>
+              <FormLabel>Buscar por</FormLabel>
+              <Select
+                //@ts-ignore
+                onChange={(e, value) => setSearchBy(value)}
+                value={searchBy}
+              >
+                {headCells.map((headCell) => {
+                  const active = orderBy === headCell.id;
+                  //@ts-ignore
+                  const isVisible = visibleColumns.has(headCell.id);
+
+                  if (isVisible) {
+                    return <Option value={headCell.id}>{headCell.label}</Option>;
+                  } else {
+                    return null;
+                  }
+                })}
+              </Select>
+            </FormControl>
+          </Column>
+          <Column xs={12} sm={6} md={3} lg={2} m={{ xs: 0, md: 1 }}>
+            <FormControl>
+              <FormLabel>Buscar</FormLabel>
+              <Input
+                endDecorator={<Search />}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </FormControl>
+          </Column>
+        </Row>
+        {/* <Row xs={12} md={6}>
+          <Column xs={12} md={6} alignContent="flex-end" alignItems="center">
+            Exportar
+          </Column> 
+        </Row>*/}
+      </Container>
+      <Table {...TableProperties}>
         {renderHeader()}
         {renderBody()}
         {renderFooter()}
@@ -383,5 +481,3 @@ function CustomTable<T>({
     </Sheet>
   );
 }
-
-export default CustomTable;

@@ -1,15 +1,17 @@
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
-import { Button, Stack, Table } from "@mui/joy";
-import { Add, Edit, Fastfood, NoFood } from "@mui/icons-material";
-import { Column, Container, Row } from "../../../components/GridComponents";
+import { Button, Stack, Typography } from "@mui/joy";
+import { Edit, Fastfood, NoFood } from "@mui/icons-material";
+import { Container } from "../../../components/GridComponents";
 import ModalFormProductos from "./ModalFormProductos";
 import ModalDarBaja from "../../../components/FeedbackComponents/ModalDarBaja";
 import { ProductoInterface } from "../../../interfaces/producto.interface";
 import useUrlAxio from "../../../hooks/urlAxio.hook";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import { NotificacionInterface, useNotificacion } from "../../../hooks/notificaciones.hook";
+import { NotificacionInterface } from "../../../hooks/notificaciones.hook";
 import useSesion from "../../../hooks/usuarioLogueado.hook";
+import createExtendedInterfaceForTables from "../../../utils/Interfaces.util";
+import { BodyRow, CustomTable, HeadCell } from "../../../components/CustomTable";
 
 interface ContainerProps {
   MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
@@ -173,9 +175,143 @@ const TabProductos: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
     ));
   };
 
+  const renderTableProductos = (): JSX.Element => {
+    type ProductoTableInterface = ReturnType<
+      typeof createExtendedInterfaceForTables<ProductoInterface>
+    >;
+    let cabecera: HeadCell<ProductoTableInterface>[] = [
+      { id: "nombre", label: "Nombre", numeric: false, ordenable: true },
+      { id: "tipo", label: "Tipo Producto", numeric: false, ordenable: true },
+      { id: "precio", label: "Precio", numeric: true, ordenable: true },
+      { id: "habilitado", label: "Habilitado", numeric: false, ordenable: true },
+      { id: "acciones", label: "Acciones", numeric: false, ordenable: false },
+    ];
+    const filas: BodyRow<ProductoTableInterface>[] = [];
+    productos.forEach((producto) => {
+      const rowId = `row-${producto.id}`;
+      filas.push({
+        id: rowId,
+        row: [
+          {
+            id: "nombre",
+            numeric: false,
+            value: producto.nombre,
+            render: <Typography>{producto.nombre}</Typography>,
+          },
+          {
+            id: "tipo",
+            numeric: false,
+            //@ts-ignore
+            value: producto.TipoProducto?.nombre,
+            render: <Typography>{producto.TipoProducto?.nombre}</Typography>,
+          },
+          {
+            id: "precio",
+            numeric: true,
+            value: producto.precio,
+            render: <Typography>{producto.precio}</Typography>,
+          },
+          {
+            id: "habilitado",
+            numeric: false,
+            value: producto.habilitado,
+            render: <Typography>{producto.habilitado ? "Habilitado" : "Inhabilitado"}</Typography>,
+          },
+          {
+            id: "acciones",
+            numeric: false,
+            value: null,
+            render: (
+              <Stack direction="row" alignContent="space-around" alignItems="center">
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickEditarProducto(producto)}
+                  sx={{ p: "8px" }}
+                >
+                  <Edit />
+                </Button>
+                <Button
+                  variant="plain"
+                  onClick={() => handleClickDarBajaProducto(producto)}
+                  sx={{ p: "8px" }}
+                >
+                  {producto.habilitado ? <Fastfood /> : <NoFood />}
+                </Button>
+              </Stack>
+            ),
+          },
+        ],
+        rowProps: { onDoubleClick: () => handleClickConsultarProducto(producto) },
+      });
+    });
+
+    return (
+      <CustomTable<ProductoTableInterface>
+        data={filas}
+        headCells={cabecera}
+        showCheckbox={false}
+        visibleColumns={new Set(["nombre", "tipo", "precio", "habilitado", "acciones"])}
+        labelAgregar="Agregar producto"
+        handleClickRegistrar={handleClickRegistrarProducto}
+        SheetProperties={{
+          variant: "outlined",
+          sx: {
+            "--TableCell-height": "20px",
+            // the number is the amount of the header rows.
+            "--TableHeader-height": "calc(1 * var(--TableCell-height))",
+            "--Table-firstColumnWidth": "80px",
+            "--Table-lastColumnWidth": "90px",
+            // background needs to have transparency to show the scrolling shadows
+            "--TableRow-hoverBackground": "rgba(0 0 0 / 0.08)",
+            overflow: "auto",
+            background: (
+              theme
+            ) => `linear-gradient(to right, ${theme.vars.palette.background.surface} 30%, rgba(255, 255, 255, 0)),
+            linear-gradient(to right, rgba(255, 255, 255, 0), ${theme.vars.palette.background.surface} 70%) 0 100%,
+            radial-gradient(
+              farthest-side at 0 50%,
+              rgba(0, 0, 0, 0.12),
+              rgba(0, 0, 0, 0)
+            ),
+            radial-gradient(
+                farthest-side at 100% 50%,
+                rgba(0, 0, 0, 0.12),
+                rgba(0, 0, 0, 0)
+              )
+              0 100%`,
+            backgroundSize:
+              "40px calc(100% - var(--TableCell-height)), 40px calc(100% - var(--TableCell-height)), 14px calc(100% - var(--TableCell-height)), 14px calc(100% - var(--TableCell-height))",
+            backgroundRepeat: "no-repeat",
+            backgroundAttachment: "local, local, scroll, scroll",
+            backgroundPosition:
+              "var(--Table-firstColumnWidth) var(--TableCell-height), calc(100% - var(--Table-lastColumnWidth)) var(--TableCell-height), var(--Table-firstColumnWidth) var(--TableCell-height), calc(100% - var(--Table-lastColumnWidth)) var(--TableCell-height)",
+            backgroundColor: "background.surface",
+          },
+        }}
+        TableProperties={{
+          // size: "lg",
+          hoverRow: true,
+          sx: {
+            "& tr > *:first-of-type": {
+              position: "sticky",
+              left: 0,
+              boxShadow: "1px 0 var(--TableCell-borderColor)",
+              bgcolor: "background.surface",
+            },
+            "& tr > *:last-child": {
+              position: "sticky",
+              right: 0,
+              bgcolor: "var(--TableCell-headBackground)",
+            },
+          },
+        }}
+      />
+    );
+  };
+
   return (
     <Container direction="column" justifyContent="space-evenly" alignItems="center">
-      <Row
+      {/* <Row
         // variant="outlined"
         sx={{
           "--TableCell-height": "20px",
@@ -252,7 +388,8 @@ const TabProductos: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
             {renderProductos()}
           </tbody>
         </Table>
-      </Row>
+      </Row> */}
+      {renderTableProductos()}
       <ModalFormProductos
         open={openModalProducto}
         setOpen={setOpenModalProducto}

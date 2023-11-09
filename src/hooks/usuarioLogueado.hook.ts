@@ -9,21 +9,24 @@ type UseSesion = {
 
 const useSesion = (): UseSesion => {
   const getSesion = (): EmpleadoInterface => {
-    //@ts-ignore
     return (
-      JSON.parse(sessionStorage.getItem("UL") || "") || {
-        id: 0,
-        user: "",
-        pass: "",
-        nombre: "",
-        apellido: "",
-        nroDocumento: 0,
-        rol: 0,
-        telefono: "",
-        email: "",
-        estado: 0,
-        token: "",
-      }
+      //@ts-ignore
+      JSON.parse(sessionStorage.getItem("UL")) !== null
+        ? //@ts-ignore
+          JSON.parse(sessionStorage.getItem("UL"))
+        : {
+            id: 0,
+            user: "",
+            pass: "",
+            nombre: "",
+            apellido: "",
+            nroDocumento: 0,
+            rol: 0,
+            telefono: "",
+            email: "",
+            estado: 0,
+            token: "",
+          }
     );
   };
   const setSesion = (empleado: EmpleadoInterface): void => {
