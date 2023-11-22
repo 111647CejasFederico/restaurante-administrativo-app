@@ -18,7 +18,6 @@ import {
   Option,
   Select,
   Textarea,
-  Typography,
 } from "@mui/joy";
 import { TipoProductoInterface } from "../../../interfaces/tipo.interface";
 import { NotificacionInterface, useNotificacion } from "../../../hooks/notificaciones.hook";

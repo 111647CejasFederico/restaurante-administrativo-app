@@ -1,8 +1,11 @@
 import { Toaster, toast } from "sonner";
 import { NotificacionInterface } from "../../hooks/notificaciones.hook";
-import { Info, ReportGmailerrorred, TaskAlt, WarningAmber } from "@mui/icons-material";
 import { useEffect } from "react";
 import "./CustomToast.css";
+import TaskAlt from "@mui/icons-material/TaskAlt";
+import ReportGmailerrorred from "@mui/icons-material/ReportGmailerrorred";
+import WarningAmber from "@mui/icons-material/WarningAmber";
+import Info from "@mui/icons-material/Info";
 
 interface ContainerProps extends NotificacionInterface {
   onClose: () => void;
@@ -20,6 +23,8 @@ const CustomToast: React.FC<ContainerProps> = ({ mostrar, mensaje, color, onClos
         return "light";
       case "neutros":
         return "neutral";
+      case "azul":
+        return "primary";
       default:
         return "primary";
     }

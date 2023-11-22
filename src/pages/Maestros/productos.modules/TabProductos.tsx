@@ -250,6 +250,7 @@ const TabProductos: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
         data={filas}
         headCells={cabecera}
         showCheckbox={false}
+        //@ts-ignore
         visibleColumns={new Set(["nombre", "tipo", "precio", "habilitado", "acciones"])}
         labelAgregar="Agregar producto"
         handleClickRegistrar={handleClickRegistrarProducto}

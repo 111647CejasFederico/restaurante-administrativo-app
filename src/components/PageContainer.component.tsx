@@ -9,7 +9,7 @@ import Footer from "./PageSections/Footer.component";
 
 export default function PageContainer() {
   return (
-    <CssVarsProvider disableTransitionOnChange>
+    <CssVarsProvider defaultMode="light">
       <CssBaseline />
       <Box sx={{ display: "flex", minHeight: "100dvh" }}>
         <Sidebar />

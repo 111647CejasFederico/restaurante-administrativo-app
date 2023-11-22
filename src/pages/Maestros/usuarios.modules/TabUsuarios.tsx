@@ -232,12 +232,14 @@ const TabUsuarios: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
           {
             id: "rol",
             numeric: false,
+            //@ts-ignore
             value: usuario.Rol?.nombre,
             render: <Typography>{usuario.Rol?.nombre}</Typography>,
           },
           {
             id: "estado",
             numeric: false,
+            //@ts-ignore
             value: usuario.EstadoUsuario?.nombre,
             render: <Typography>{usuario.EstadoUsuario?.nombre}</Typography>,
           },
@@ -280,6 +282,7 @@ const TabUsuarios: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
         data={filas}
         headCells={cabecera}
         showCheckbox={false}
+        //@ts-ignore
         visibleColumns={
           new Set([
             "user",

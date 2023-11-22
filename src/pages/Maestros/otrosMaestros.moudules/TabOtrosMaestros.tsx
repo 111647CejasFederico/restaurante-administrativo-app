@@ -17,9 +17,9 @@ import {
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import useSesion from "../../../hooks/usuarioLogueado.hook";
 import useUrlAxio from "../../../hooks/urlAxio.hook";
-import { Add, CheckCircle, Edit, Unpublished } from "@mui/icons-material";
+import { CheckCircle, Edit, Unpublished } from "@mui/icons-material";
 import { BodyRow, HeadCell, CustomTable } from "../../../components/CustomTable";
-import { createExtendedInterfaceForTables } from "../../../utils/Interfaces.util";
+import createExtendedInterfaceForTables from "../../../utils/Interfaces.util";
 
 interface ContainerProps {
   MostrarNotificacion: (Notificacion: NotificacionInterface) => void;
@@ -357,6 +357,7 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
         data={filas}
         headCells={cabecera}
         showCheckbox={false}
+        //@ts-ignore
         visibleColumns={new Set(["nombre", "descripcion", "habilitado", "acciones"])}
         labelAgregar="Agregar tipo producto"
         handleClickRegistrar={handleClickRegistrarTipo}
@@ -448,6 +449,7 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
         data={filas}
         headCells={cabecera}
         showCheckbox={false}
+        //@ts-ignore
         visibleColumns={new Set(["nombre", "descripcion", "habilitado", "acciones"])}
         labelAgregar="Agregar rol de usuario"
         handleClickRegistrar={handleClickRegistrarTipo}
@@ -539,6 +541,7 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
         data={filas}
         headCells={cabecera}
         showCheckbox={false}
+        //@ts-ignore
         visibleColumns={new Set(["nombre", "descripcion", "habilitado", "acciones"])}
         labelAgregar="Agregar rol de usuario"
         handleClickRegistrar={handleClickRegistrarTipo}
@@ -630,6 +633,7 @@ const TabOtrosMaestros: React.FC<ContainerProps> = ({ MostrarNotificacion }) => 
         data={filas}
         headCells={cabecera}
         showCheckbox={false}
+        //@ts-ignore
         visibleColumns={new Set(["nombre", "descripcion", "habilitado", "acciones"])}
         labelAgregar="Agregar rol de usuario"
         handleClickRegistrar={handleClickRegistrarTipo}

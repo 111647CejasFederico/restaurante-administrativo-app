@@ -6,7 +6,7 @@ import IconButton from "@mui/joy/IconButton";
 import List from "@mui/joy/List";
 import ListItem from "@mui/joy/ListItem";
 import ListItemButton, { listItemButtonClasses } from "@mui/joy/ListItemButton";
-import ListItemContent from "@mui/joy/ListItemContent";
+
 import Typography from "@mui/joy/Typography";
 import Sheet from "@mui/joy/Sheet";
 import DocumentScannerRounded from "@mui/icons-material/DocumentScannerRounded";
@@ -60,12 +60,6 @@ export default function Sidebar() {
       rolNecesario: [1, 2, 3],
     },
     {
-      label: "Pedidos",
-      icon: <ViewListRounded />,
-      href: "/Portal/Pedidos",
-      rolNecesario: [1, 2, 3],
-    },
-    {
       label: "Facturacion",
       icon: <PointOfSaleRounded />,
       href: "/Portal/Facturacion",
@@ -102,9 +96,7 @@ export default function Sidebar() {
           <ListItem key={opcion.label}>
             <ListItemButton role="menuitem" component="a" href={opcion.href}>
               {opcion.icon}
-              <ListItemContent>
-                <Typography level="title-sm">{opcion.label}</Typography>
-              </ListItemContent>
+              <Typography>{opcion.label}</Typography>
             </ListItemButton>
           </ListItem>
         );

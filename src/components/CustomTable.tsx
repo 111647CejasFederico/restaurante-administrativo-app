@@ -35,7 +35,7 @@ interface BodyCell<T> {
 export interface BodyRow<T> {
   rowProps: DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>;
   row: BodyCell<T>[];
-  id: string; // Agregar un identificador único para cada fila
+  id: string;
 }
 
 interface ContainerProps<T> {
@@ -44,10 +44,10 @@ interface ContainerProps<T> {
   labelAgregar: string;
   handleClickRegistrar: () => void;
   showCheckbox: boolean;
+  mostrarAgregar?: boolean;
   visibleColumns: Set<keyof T>;
   SheetProperties: SheetProps;
   TableProperties: TableProps;
-  onSelectedChange?: (selected: string[]) => void;
 }
 
 type Order = "asc" | "desc";
@@ -58,10 +58,10 @@ export function CustomTable<T>({
   labelAgregar,
   handleClickRegistrar,
   showCheckbox,
+  mostrarAgregar = true,
   visibleColumns,
   SheetProperties,
   TableProperties,
-  onSelectedChange,
 }: ContainerProps<T>) {
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof T>();
@@ -146,40 +146,19 @@ export function CustomTable<T>({
         );
       }
     }
-    if (orderBy) sortData(orderBy, order, filteredRows);
-    setRows(orderBy ? sortData(orderBy, order, filteredRows) : filteredRows);
+    if (orderBy) {
+      filteredRows = sortData(orderBy, order, filteredRows);
+    }
+    setRows(filteredRows);
   };
 
   const handleSelectAllClick = (checked: boolean) => {
     if (checked) {
       const newSelected = data.map((n) => n.id);
       setSelected(newSelected);
-      // onSelectedChange(newSelected);
       return;
     }
     setSelected([]);
-    // onSelectedChange([]);
-  };
-
-  const handleClick = (id: string) => {
-    const selectedIndex = selected.indexOf(id);
-    let newSelected: string[] = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, id);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
-
-    setSelected(newSelected);
-    // onSelectedChange(newSelected);
   };
 
   const handleChangePage = (newPage: number) => {
@@ -284,72 +263,64 @@ export function CustomTable<T>({
   };
 
   useEffect(() => {
-    if (data.length > 0) {
-      filterRows();
-    }
+    filterRows();
   }, [data, search, searchBy, order, orderBy]);
 
   const renderBody = () => {
     return (
       <tbody>
-        <tr key={"add-item-row"}>
-          <td colSpan={headCells.length} style={{ paddingInline: 0, paddingBlock: "5px" }}>
-            <Row xs={12}>
-              <Column xs={12}>
-                <Button onClick={handleClickRegistrar}>
-                  <Add /> {labelAgregar}
-                </Button>
-              </Column>
-            </Row>
-          </td>
-        </tr>
-        {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-          const isItemSelected = isSelected(row.id);
-
-          return (
-            <tr
-              {...row.rowProps}
-              key={row.id} // Agrega una clave única aquí
-              style={
-                isItemSelected
-                  ? ({
-                      "--TableCell-dataBackground": "var(--TableCell-selectedBackground)",
-                      "--TableCell-headBackground": "var(--TableCell-selectedBackground)",
-                    } as CSSProperties)
-                  : {}
-              }
+        {mostrarAgregar && (
+          <tr key={"add-item-row"}>
+            <td
+              colSpan={headCells.length}
+              key={0}
+              style={{ paddingInline: 0, paddingBlock: "5px" }}
             >
-              {/* {showCheckbox && (
-                  <th scope="row">
-                    <Checkbox
-                      checked={isItemSelected}
-                      slotProps={{
-                        input: {
-                          "aria-labelledby": labelId,
-                        },
-                      }}
-                      sx={{ verticalAlign: "top" }}
-                    />
-                  </th>
-                )} */}
-              {headCells.map((headCell) => {
-                //@ts-ignore
-                const isVisible = visibleColumns.has(headCell.id);
+              <Row xs={12}>
+                <Column xs={12}>
+                  <Button onClick={handleClickRegistrar}>
+                    <Add /> {labelAgregar}
+                  </Button>
+                </Column>
+              </Row>
+            </td>
+          </tr>
+        )}
+        {rows.length > 0 &&
+          rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+            const isItemSelected = isSelected(row.id);
 
-                if (isVisible) {
-                  //@ts-ignore
-                  return (
-                    <td style={{ height: "40px" }}>
-                      {row.row.find((columna) => columna.id === headCell.id)?.render}
-                    </td>
-                  );
-                } else {
-                  return null;
+            return (
+              <tr
+                {...row.rowProps}
+                key={row.id} // Agrega una clave única aquí
+                style={
+                  isItemSelected
+                    ? ({
+                        "--TableCell-dataBackground": "var(--TableCell-selectedBackground)",
+                        "--TableCell-headBackground": "var(--TableCell-selectedBackground)",
+                      } as CSSProperties)
+                    : {}
                 }
-              })}
-            </tr>
-          );
-        })}
+              >
+                {headCells.map((headCell) => {
+                  //@ts-ignore
+                  const isVisible = visibleColumns.has(headCell.id);
+
+                  if (isVisible) {
+                    //@ts-ignore
+                    return (
+                      <td style={{ height: "40px" }}>
+                        {row.row.find((columna) => columna.id === headCell.id)?.render}
+                      </td>
+                    );
+                  } else {
+                    return null;
+                  }
+                })}
+              </tr>
+            );
+          })}
         {emptyRows > 0 && (
           <tr
             style={
@@ -389,9 +360,9 @@ export function CustomTable<T>({
               </FormControl>
               <Typography textAlign="center" sx={{ minWidth: 80 }}>
                 {`Mostrando ${
-                  data.length === 0 ? 0 : page * rowsPerPage + 1
+                  rows.length === 0 ? 0 : page * rowsPerPage + 1
                 } - ${getLabelDisplayedRowsTo()} de ${
-                  data.length === -1 ? -1 : data.length
+                  rows.length === -1 ? -1 : rows.length
                 } elementos`}
               </Typography>
               <Box sx={{ display: "flex", gap: 1 }}>
@@ -410,7 +381,7 @@ export function CustomTable<T>({
                   color="neutral"
                   variant="outlined"
                   disabled={
-                    data.length !== -1 ? page >= Math.ceil(data.length / rowsPerPage) - 1 : false
+                    rows.length !== -1 ? page >= Math.ceil(rows.length / rowsPerPage) - 1 : false
                   }
                   onClick={() => handleChangePage(page + 1)}
                   sx={{ bgcolor: "background.surface" }}
@@ -447,7 +418,11 @@ export function CustomTable<T>({
                   const isVisible = visibleColumns.has(headCell.id);
 
                   if (isVisible) {
-                    return <Option value={headCell.id}>{headCell.label}</Option>;
+                    return (
+                      <Option key={headCell.label} value={headCell.id}>
+                        {headCell.label}
+                      </Option>
+                    );
                   } else {
                     return null;
                   }
@@ -467,11 +442,6 @@ export function CustomTable<T>({
             </FormControl>
           </Column>
         </Row>
-        {/* <Row xs={12} md={6}>
-          <Column xs={12} md={6} alignContent="flex-end" alignItems="center">
-            Exportar
-          </Column> 
-        </Row>*/}
       </Container>
       <Table {...TableProperties}>
         {renderHeader()}

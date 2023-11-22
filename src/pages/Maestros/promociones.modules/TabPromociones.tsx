@@ -261,6 +261,7 @@ const TabPromociones: React.FC<ContainerProps> = ({ MostrarNotificacion }) => {
         data={filas}
         headCells={cabecera}
         showCheckbox={false}
+        //@ts-ignore
         visibleColumns={
           new Set([
             "nombre",

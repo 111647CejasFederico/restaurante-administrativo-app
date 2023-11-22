@@ -133,7 +133,7 @@ const Login = () => {
   }, []);
 
   return (
-    <CssVarsProvider defaultMode="dark">
+    <CssVarsProvider defaultMode="system">
       <CssBaseline />
       <GlobalStyles
         styles={{

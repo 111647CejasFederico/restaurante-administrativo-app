@@ -1,17 +1,14 @@
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import Box from "@mui/joy/Box";
 import Stack from "@mui/joy/Stack";
 import Maestros from "../../pages/Maestros/Maestros.page";
 import { useLocation, useParams } from "react-router";
 import Carta from "../../pages/Carta/Carta";
+import TabMesas from "../../pages/Mesas/TabMesas";
 
 export default function MainContainer() {
   const { name } = useParams<{ name: string }>();
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    console.log(name, pathname);
-  }, [name]);
+  // const { pathname } = useLocation();
 
   return (
     <Box
@@ -35,29 +32,28 @@ export default function MainContainer() {
           },
         }}
       >
-        {(() => {
-          switch (name) {
-            case "Carta":
-              return <Carta />;
-            case "Mesas":
-              //   return <HorariosPrestadores />;
-              break;
-            case "Pedidos":
-              //   return <NuevoTurnoPrestacional />;
-              break;
-            case "Facturacion":
-              //   return <NuevoTurnoImagenes />;
-              break;
-            case "Maestros":
-              return <Maestros />;
-            case "Reportes":
-              //   return <MainPage />;
-              break;
-            default:
-              // return <PageError motivo="404" />;
-              break;
-          }
-        })()}
+        <Suspense fallback={<div>Cargando...</div>}>
+          {(() => {
+            switch (name) {
+              case "Carta":
+                return <Carta />;
+              case "Mesas":
+                return <TabMesas cols={3} rows={8} />;
+                break;
+              case "Facturacion":
+                //   return <NuevoTurnoImagenes />;
+                break;
+              case "Maestros":
+                return <Maestros />;
+              case "Reportes":
+                //   return <MainPage />;
+                break;
+              default:
+                // return <PageError motivo="404" />;
+                break;
+            }
+          })()}
+        </Suspense>
       </Stack>
     </Box>
   );

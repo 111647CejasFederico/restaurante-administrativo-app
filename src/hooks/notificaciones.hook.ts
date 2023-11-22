@@ -2,7 +2,7 @@ import { useState } from "react";
 export interface NotificacionInterface {
   mostrar: boolean;
   mensaje: string;
-  color: string;
+  color: "verde" | "rojo" | "amarillo" | "blanco" | "neutros" | "azul";
 }
 type UseNotificacion = {
   Notificacion: NotificacionInterface;
@@ -13,7 +13,7 @@ type UseNotificacion = {
 export const useNotificacion = (): UseNotificacion => {
   const [Notificacion, setNotificacion] = useState<NotificacionInterface>({
     mostrar: false,
-    color: "",
+    color: "azul",
     mensaje: "",
   });
 
@@ -22,7 +22,7 @@ export const useNotificacion = (): UseNotificacion => {
   };
 
   const OcultarNotificacion = () => {
-    setNotificacion({ mostrar: false, color: "", mensaje: "" });
+    setNotificacion({ mostrar: false, color: "azul", mensaje: "" });
   };
 
   return { Notificacion, MostrarNotificacion, OcultarNotificacion };

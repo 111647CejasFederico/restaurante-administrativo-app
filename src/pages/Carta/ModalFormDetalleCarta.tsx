@@ -9,14 +9,10 @@ import {
   FormHelperText,
   FormLabel,
   Input,
-  ListItem,
-  ListItemContent,
   Modal,
   ModalDialog,
   Option,
   Select,
-  Switch,
-  Textarea,
 } from "@mui/joy";
 import { Column, Container, Row } from "../../components/GridComponents";
 import { InfoOutlined } from "@mui/icons-material";
@@ -30,6 +26,7 @@ import {
 import { ProductoInterface } from "../../interfaces/producto.interface";
 import { PromocionInterface } from "../../interfaces/promocion.interface";
 import { TipoProductoInterface } from "../../interfaces/tipo.interface";
+import { borrarObjetosDuplicados } from "../../utils/Arrays.util";
 
 interface ContainerProps {
   modo?: "consulta" | "registrar" | "editar" | "cerrado";
@@ -70,7 +67,7 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
   const [promociones, setPromociones] = useState<PromocionInterface[]>([]);
 
   const [tipoProductoSeleccionado, setTipoProductoSeleccionado] = useState<TipoProductoInterface>({
-    id: -1,
+    id: 0,
     nombre: "",
     descripcion: "",
     habilitado: true,
@@ -95,7 +92,7 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
         response.data.forEach((producto: any) => {
           productosResponse.push({ ...producto });
         });
-        productosResponse = productosResponse.filter((producto) => producto.habilitado === true);
+        productosResponse = productosResponse.filter((producto) => producto.habilitado);
 
         setProductos(productosResponse);
       } else {
@@ -161,21 +158,30 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
       const response = await axios.get(`${getUrlAxio()}TipoProducto`, config);
 
       let tiposProductosResponse: TipoProductoInterface[] = [
-        { id: 0, nombre: "promocion", descripcion: "", habilitado: true },
+        { id: 0, nombre: "Promocion", descripcion: "", habilitado: true },
       ];
-      response.data.forEach((tipos: any) => {
-        tiposProductosResponse.push({ ...tipos });
+      response.data.forEach((tipo: any) => {
+        productos.map((producto) => {
+          if (producto.tipo === tipo.id) {
+            tiposProductosResponse.push({ ...tipo });
+          }
+        });
       });
       tiposProductosResponse = tiposProductosResponse.filter((tipo) => tipo.habilitado === true);
+      tiposProductosResponse = borrarObjetosDuplicados<TipoProductoInterface>(
+        tiposProductosResponse,
+        "id",
+        false
+      );
       setTiposProductos(tiposProductosResponse);
     } catch (e: any) {}
   };
 
   const CargarFormulario = async () => {
-    await getProductos();
-    await getPromociones();
-    await getTipoProducto();
     if (detalleCartaSeleccionado && open) {
+      await getProductos();
+      await getPromociones();
+      await getTipoProducto();
       setDetalleCarta({ ...detalleCartaSeleccionado });
     }
     if (!open)
@@ -195,6 +201,7 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
   }, [detalleCartaSeleccionado, open]);
 
   const ValidarFormulario = (): boolean => {
+    let pasa = true;
     let errores: DetalleCartaErrorInterface = {
       carta: false,
       promocion: false,
@@ -202,17 +209,27 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
       cantidadDisponible: false,
     };
 
-    let pasa = true;
     if (detalleCarta.promocion === 0 && detalleCarta.producto === 0) {
       pasa = false;
       errores.producto = true;
       errores.promocion = true;
     }
+
     if (detalleCarta.promocion !== 0 && detalleCarta.producto !== 0) {
       pasa = false;
       errores.producto = true;
       errores.promocion = true;
     }
+
+    if (
+      (detalleCarta.promocion !== 0 && detalleCarta.producto === null) ||
+      (detalleCarta.promocion === null && detalleCarta.producto !== 0)
+    ) {
+      pasa = true;
+      errores.producto = false;
+      errores.promocion = false;
+    }
+
     if (detalleCarta.cantidadDisponible === null || detalleCarta.cantidadDisponible <= 0) {
       pasa = false;
       errores.cantidadDisponible = true;
@@ -223,14 +240,34 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
   };
 
   const handleChangeInput = (prop: keyof DetalleCartaInterface, value: any) => {
-    setDetalleCarta((prevdetalleCarta) => ({
-      ...prevdetalleCarta,
-      [prop]: value,
-    }));
+    setDetalleCarta((prevdetalleCarta) => {
+      let detalle = prevdetalleCarta;
+
+      if (prop === "promocion" || prop === "producto") {
+        if (prop === "promocion") {
+          detalle.DetalleCartaPromocion = promociones.filter((promo) => promo.id === value)[0];
+          detalle.DetalleCartaProducto = null;
+        }
+
+        if (prop === "producto") {
+          detalle.DetalleCartaProducto = productos.filter((producto) => producto.id === value)[0];
+          detalle.DetalleCartaPromocion = null;
+        }
+      }
+
+      if (prop === "cantidadDisponible" && value !== "") {
+        detalle.cantidadDisponible = Number(value);
+      }
+
+      return {
+        ...detalle,
+        [prop]: value,
+      };
+    });
   };
 
   const handleChangeInputTipoProducto = (value: number | null) => {
-    let tipo = tiposProducto.filter((tipo) => tipo.id === value)[0];
+    let tipo = tiposProducto.filter((tipo) => tipo?.id === value)[0];
     setTipoProductoSeleccionado(tipo);
   };
 
@@ -239,6 +276,16 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
       if (handleClickGrabar && (modo === "editar" || modo === "registrar")) {
         handleClickGrabar(detalleCarta);
       }
+
+      setDetalleCarta({
+        id: 0,
+        carta: 0,
+        promocion: 0,
+        producto: 0,
+        cantidadDisponible: 0,
+        disponible: true,
+        visible: true,
+      });
     } else {
       MostrarNotificacion({
         mostrar: true,
@@ -250,26 +297,40 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
 
   const renderTiposProductos = (): JSX.Element[] => {
     return tiposProducto.map((tipo) => (
-      <Option value={tipo.id} key={tipo.id}>
+      <Option value={tipo?.id} key={tipo?.id}>
         {tipo.nombre}
       </Option>
     ));
   };
 
   const renderProductos = (): JSX.Element[] => {
-    return productos.map((procucto) => (
-      <Option value={procucto.id} key={procucto.id}>
-        {procucto.nombre}
-      </Option>
-    ));
+    if (tipoProductoSeleccionado.id === -1) {
+      return productos.map((producto) => (
+        <Option value={producto?.id} key={producto?.id}>
+          {producto.nombre}
+        </Option>
+      ));
+    } else if (tipoProductoSeleccionado.id !== 0) {
+      return productos.map((producto) => {
+        if (producto.tipo === tipoProductoSeleccionado.id)
+          return (
+            <Option value={producto?.id} key={producto?.id}>
+              {producto.nombre}
+            </Option>
+          );
+        else return <></>;
+      });
+    } else return [];
   };
 
   const renderPromociones = (): JSX.Element[] => {
-    return promociones.map((promocion) => (
-      <Option value={promocion.id} key={promocion.id}>
-        {promocion.nombre}
-      </Option>
-    ));
+    if (tipoProductoSeleccionado.id === -1 || tipoProductoSeleccionado.id === 0) {
+      return promociones.map((promocion) => (
+        <Option value={promocion?.id} key={promocion?.id}>
+          {promocion.nombre}
+        </Option>
+      ));
+    } else return [];
   };
 
   return (
@@ -286,12 +347,12 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
           <Container display="flex" justifyContent="space-between" alignItems="center">
             <Row xs={12}>
               <Column xs={12} sx={{ p: "5px" }}>
-                <FormControl disabled={modo === "consulta"}>
+                <FormControl disabled={modo === "consulta" || modo === "editar"}>
                   <FormLabel>Tipo Producto</FormLabel>
                   <Select
                     size="sm"
                     required
-                    value={tipoProductoSeleccionado.id}
+                    value={tipoProductoSeleccionado?.id}
                     onChange={(e, value) => handleChangeInputTipoProducto(value)}
                   >
                     {renderTiposProductos()}
@@ -300,9 +361,11 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
               </Column>
             </Row>
             <Row xs={12}>
-              <Column xs={12} sx={{ p: "5px" }}>
+              <Column xs={12} md={6} sx={{ p: "5px" }}>
                 <FormControl
-                  disabled={modo === "consulta" || tipoProductoSeleccionado.id === 0}
+                  disabled={
+                    modo === "consulta" || tipoProductoSeleccionado?.id === 0 || modo === "editar"
+                  }
                   error={detalleCartaError.producto}
                 >
                   <FormLabel>Producto</FormLabel>
@@ -324,7 +387,11 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
               </Column>
               <Column xs={12} md={6} sx={{ p: "5px" }}>
                 <FormControl
-                  disabled={modo === "consulta" || tipoProductoSeleccionado.id !== 0}
+                  disabled={
+                    modo === "consulta" ||
+                    !(tipoProductoSeleccionado?.id === 0 || tipoProductoSeleccionado?.id === -1) ||
+                    modo === "editar"
+                  }
                   error={detalleCartaError.promocion}
                 >
                   <FormLabel>Promocion</FormLabel>
@@ -360,6 +427,7 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
                     value={
                       detalleCarta.cantidadDisponible !== null ? detalleCarta.cantidadDisponible : 0
                     }
+                    onFocus={(e) => handleChangeInput("cantidadDisponible", "")}
                     onChange={(e) => handleChangeInput("cantidadDisponible", e.target.value)}
                   />
                   {detalleCartaError.cantidadDisponible && (
@@ -368,20 +436,6 @@ const ModalFormDetalleCarta: React.FC<ContainerProps> = ({
                       Dato invalido
                     </FormHelperText>
                   )}
-                </FormControl>
-              </Column>
-            </Row>
-
-            <Row xs={12}>
-              <Column xs={12} sx={{ p: "5px" }}>
-                <FormControl disabled={modo === "consulta"}>
-                  <Checkbox
-                    label="Disponible"
-                    size="lg"
-                    sx={{ border: "0px" }}
-                    checked={detalleCarta.disponible}
-                    onChange={(e) => handleChangeInput("disponible", e.target.checked)}
-                  />
                 </FormControl>
               </Column>
             </Row>

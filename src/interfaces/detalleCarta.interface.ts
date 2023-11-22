@@ -9,8 +9,8 @@ export interface DetalleCartaInterface {
   cantidadDisponible: number | null;
   disponible: boolean;
   visible: boolean;
-  Promocion?: PromocionInterface;
-  Producto?: ProductoInterface | null;
+  DetalleCartaPromocion?: PromocionInterface | null;
+  DetalleCartaProducto?: ProductoInterface | null;
 }
 export interface DetalleCartaErrorInterface {
   carta: boolean;
